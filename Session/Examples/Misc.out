@@ -1,0 +1,18 @@
+*** Ex 1 ***
+*** Ex 2 ***
+A channel was created!
+Child has started
+Parent has received "Message"
+Child has written
+Child has finished
+Parent has finished
+*** Ex 3 ***
+Enter 0
+Enter 1
+Enter 2
+Exit 2
+1 -> 0
+2 -> 0
+Exit 0
+2 -> 1
+Exit 1

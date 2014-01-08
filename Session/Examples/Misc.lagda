@@ -1,0 +1,115 @@
+[2013-2014 Matteo Acerbi](https://www.gnu.org/licenses/gpl.html)
+
+# Simple examples
+
+\begin{code}
+module Session.Examples.Misc where
+\end{code}
+
+\begin{code}
+open import Base
+open import Session
+\end{code}
+
+## Abstract examples
+
+\begin{code}
+module Basic (M : Set → Set)(η : ∀ {X} → X → M X)
+             (A : Entry)(B : ⊤ ▹ ⊤) where
+
+  a : [] ∷ (»» (A ⊗ B)) ∷ A [ M ⊢ ⊤ ]> [] ∷ »» B
+  a = send Z| Z| »= λ _ → ⇑ η _
+
+  b : [] ∷ (A ⅋ B) «« ∷ A [ M ⊢ ⊤ ]> [] ∷ B ««
+  b = send Z| Z| »= λ _ → ⇑ η _
+
+  c : [] ∷ »» (A ⅋ B) [ M ⊢ ⊤ ]> [] ∷ »» B ∷ A
+  c = receive Z| »= λ _ → ⇑ η _
+\end{code}
+
+## Basic communication
+
+\begin{code}
+module Ex1 (M : Set → Set)(η : ∀ {X} → X → M X) where
+
+  ex1 : [] [ M ⊢ ⊤ ]> []
+  ex1 = new
+      » fork ([] ,̇ -+) (T ∋   write Z| 42
+                            » end   Z|   )
+      » _ <- read Z|
+      ⋯ end Z|
+      where T = [] ∷ (_ , ⊤ , ⊤ , _) [ _ ⊢ _ ]> []
+\end{code}
+
+\begin{code}
+open IO ; open C ; open CS
+open import Unit as U
+open import Data.String
+
+open Ex1 IO return
+\end{code}
+
+## Basic communication, with IO actions
+
+\begin{code}
+ex2 : IOProc _
+ex2 = new
+    » ⇑ putStrLn « "A channel was created!" »
+    » fork ([] ,̇ -+) (T ∋
+                        ⇑ putStrLn « "Child has started" »
+                      » ⇑ threadDelay onesec
+                      » write Z| "Message"
+                      » ⇑ putStrLn « "Child has written" »
+                      » ⇑ threadDelay onesec
+                      » end Z|
+                      » ⇑ putStrLn « "Child has finished" »
+                      » ⇑ return tt)
+    » ⇑ threadDelay onesec
+    » s <- read Z|
+    ⋯ ⇑ putStrLn « "Parent has received \"" ++ s ++ "\"" »
+    » ⇑ threadDelay onesec
+    » end Z|
+    » ⇑ putStrLn « "Parent has finished" »
+  where T = [] ∷ (_ , ⊤ , ⊤ , _) [ _ ⊢ _ ]> []
+\end{code}
+
+## Send and receive
+
+\begin{code}
+ex3 : IOProc ⊤
+ex3 = ⇑ putStrLn « "Enter 0" »
+    » l <- new
+    ⋯ r <- new
+    ⋯ fork ([] ,̇ +- ,̇ +-) (T ∋ ⇑ putStrLn « "Enter 1" »
+                           » write Z| « "1 -> 0" »
+                           » send Z| Z|
+                           » a <- read Z|
+                           ⋯ ⇑ putStrLn a
+                           » ⇑ putStrLn « "Exit 1" »
+                           » end Z|)
+    » fork ([] ,̇ -  ,̇  +) (  receive Z|
+                           » ⇑ putStrLn « "Enter 2" »
+                           » write Z| « "2 -> 0" »
+                           » end Z|
+                           » write Z| « "2 -> 1" »
+                           » ⇑ putStrLn « "Exit 2" »
+                           » end Z|)
+    » x <- read Z|
+    ⋯ y <- read Z|
+    ⋯ ⇑ (putStrLn x >> putStrLn y >> putStrLn « "Exit 0" »)
+    » end Z|
+  where T = [] ∷ % (⊤ , ⊤ , _) ∷ % (⊤ , ⊤ , _) [IO _ ]> _
+\end{code}
+
+## Main program
+
+\begin{code}
+main : IO C.<>
+main = putStrLn « "*** Ex 1 ***" » >>
+       run ex1 []                  >>
+       putStrLn « "*** Ex 2 ***" » >>
+       run ex2 []                  >>
+       putStrLn « "*** Ex 3 ***" » >>
+       run ex3 []                  >>
+       threadDelay onesec
+\end{code}
