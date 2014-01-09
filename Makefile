@@ -4,7 +4,7 @@ CONCURRENT_DIR=../concurrent-agda
 SESSION_EXAMPLES_DIR=Session/Examples/
 AGDA_IMPORTS=-i "$(STDLIB_DIR)/src" -i "$(AD_DIR)" -i "$(CONCURRENT_DIR)" -i "."
 
-html : Session/Examples.lagda
+html : Session.lagda Session/Examples.lagda
 	agda --html $(AGDA_IMPORTS) $<
 
 Session/Examples/% : $(SESSION_EXAMPLES_DIR)/%.lagda
