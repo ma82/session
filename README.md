@@ -74,8 +74,11 @@ can be non-deterministic, though.
 
 ## [License](https://www.gnu.org/licenses/gpl.html)
 
+## Contacts
+
+[Mail](mailto:matteo.acerbi@gmail.com)
+[Site](http://ma82.github.io/)
+
 ## Participate!
 
 If you want to use/modify this project please let me know!
-
-mailto:matteo.acerbi@gmail.com
