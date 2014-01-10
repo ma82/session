@@ -1,6 +1,40 @@
 [2013-2014 Matteo Acerbi](https://www.gnu.org/licenses/gpl.html)
 
-# Linear dependent session types
+# Linear dependent session types [WIP]
+
+## Introduction
+
+This document describes and contains an Agda implementation of an
+embedded concurrent language with linear dependent session types.
+
+The reader must be warned that in this work we are using Agda *only*
+to try and mimic features typical of a session typed process calculi
+with a by-construction well-typed representation: we are in no way in
+the position to prove any correspondence with a logical system.
+
+We nonetheless adopt notations and ideas from more theoretical works
+in the fields of process algebras and linear logic, in particular from
+Philip Wadler's "Propositions as Sessions" paper (for the main type
+and terms constructs), and from the recent line of work by Caires,
+Pfenning and Toninho (monadic syntax, corecursion and dependent
+types).
+
+The immediate goal of this development is not to formalise a typed
+process calculus, but to allow Agda users to experiment with an
+*embedded* concurrency-oriented DSL: before attempting to prove the
+properties of the system or even of specific processes, we aim at
+designing a programmer-friendly interface.
+
+We provide an evaluation function making use of the Haskell FFI: it is
+therefore possible to compile and execute programs in the DSL as
+Haskell process (see the [http://github.com/ma82/session/](README) for
+instructions on how to attempt compilation). Note that in order to
+obtain the evaluator (see the end of this file) we had to (locally)
+disable totality checking and to use `unsafeCoerce` in several places.
+
+We are currently studying how to define a total non-deterministic
+reference semantics which will allow formalised reasoning concerning
+the concurrent execution of processes.
 
 \begin{code}
 module Session where
@@ -10,6 +44,42 @@ open import Base
 
 ## Types
 
+The syntax for types is heavily inspired by both *Strictly Positive
+Families* (the version in Peter Morris's PhD thesis) and (indexed)
+*Descriptions* (Chapman et al, "The Gentle Art of Levitation").
+
+In our case, however, we do not want to describe indexed functors: we
+just want to be able to close the language under a (greatest) fixpoint
+operator/binder `` `nu ``, allowing nested usages thanks to a
+"well-typed Bird-Paterson" encoding of binding.
+
+To compare with the cited universes, note that if we tried to give a
+`(I → Set) → (O → Set)` semantics to the `` `I ``, `` `Σ `` , `` `Π ``
+, `` `ν `` codes we would have to ignore the input of type `O`: in any
+case, such an interpretation would not make much sense here.
+
+As opposed to Wadler's CP, the typing rules for the additional
+constructors `⊗`, `⅋`, `¡`, `¿` will not correspond directly to those
+of classical linear logic: however, the corresponding syntax maintains
+similar operational meaning (channel transmission and client/server
+interactions).
+
+We add a type called `Side` (endpoint of a channel), with two only
+inhabitants: `+`, `-` . `Entry` is a type of optionally "sided"
+(session typed) codes, where absence of a side corresponds to the
+session not having started yet.
+
+When a `Side` is specified, the `Entry` corresponds to an obligation
+for the process that contains it in its (input) context: if it is `+`
+then the session type is to be interpreted without changes, otherwise
+the process must behave along that channel by following the *dual*
+obligation (receiving vs sending, reading vs writing, connecting vs
+accepting).
+
+Note that for what concerns `_⊗_` and `_⅋_` a whole `Entry` is
+required as the description of how a process participates to a channel
+needs to be preserved by the transfer.
+
 \begin{code}
 mutual 
 
@@ -18,13 +88,45 @@ mutual
   Entry = 1+ Side × Code
 
   data _▹_ (I O : Set) : Set₁ where
-    `I      :                     (i : I) → I ▹ O
-    `Σ `Π   : (S : Set)(T : I ▹ S)        → I ▹ O
-    `^      : (T : O → De I)              → I ▹ O
-    _⊗_ _⅋_ : (L : Entry)(R : I ▹ O)      → I ▹ O
-    ¡_ ¿_   : Code                        → I ▹ O
-    `μ `ν   : (F : O → De (I ⊎ O))(o : O) → I ▹ O
+\end{code}
 
+- Exiting a session
+
+\begin{code}
+    `I      :                     (i : I) → I ▹ O
+\end{code}
+
+- Writing and reading values
+
+\begin{code}
+    `Σ `Π   : (S : Set)(T : I ▹ S)        → I ▹ O
+\end{code}
+
+- Dependency on previously exchanged values
+
+\begin{code}
+    `^      : (T : O → De I)              → I ▹ O
+\end{code}
+
+- Sending and receiving channels
+
+\begin{code}
+    _⊗_ _⅋_ : (L : Entry)(R : I ▹ O)      → I ▹ O
+\end{code}
+
+- Servers and clients
+
+\begin{code}
+    ¡_ ¿_   : Code                        → I ▹ O
+\end{code}
+
+- Corecursion
+
+\begin{code}
+    `ν      : (F : O → De (I ⊎ O))(o : O) → I ▹ O
+\end{code}
+
+\begin{code}
 `Σ^ `Π^ : {I O : Set}(S : Set)(T : S → De I) → I ▹ O
 `Σ^ S T = `Σ S (`^ T)
 `Π^ S T = `Π S (`^ T)
@@ -35,13 +137,24 @@ _◂_ : Set → Set → Set₁
 O ◂ I = I ▹ O
 \end{code}
 
+This representation of the language of types should not be considered
+definitive but it seems reasonably effective.
+
+Other approaches, where the session types inductive definition `_▹_`
+would only have one parameter (as in *Descriptions*), seemed more
+difficult to implement and led to more awkward encodings of the
+syntax: we probably did not try all the possibilities, though.
+
 ### Types and sides
 
+A "sided" type former (code) `[_]F` is the type former (code) `F` when
+the side is `+`, the *dual* of `F` when it is `-`.
+
 \begin{code}
-[_]Σ   [_]Π   : Side  → {I O : Set}(S : Set)(T : I ▹ S)     → I ▹ O
-[_]Σ^  [_]Π^  : Side  → {I O : Set}(S : Set)(T : S → I ▹ ⊤) → I ▹ O
-_[_]⊗_ _[_]⅋_ : Entry → Side → {I O : Set} → I ▹ O          → I ▹ O
-[_]¡_  [_]¿_  : Side  → Code  → {I O : Set}                 → I ▹ O
+[_]Σ   [_]Π   : Side  → {I O : Set}(S : Set)(T : I ▹ S)    → I ▹ O
+[_]Σ^  [_]Π^  : Side  → {I O : Set}(S : Set)(T : S → De I) → I ▹ O
+_[_]⊗_ _[_]⅋_ : Entry → Side → {I O : Set} → I ▹ O         → I ▹ O
+[_]¡_  [_]¿_  : Side  → Code  → {I O : Set}                → I ▹ O
 [ + ]Σ     = `Σ
 [ - ]Σ     = `Π
 [ + ]Π     = `Π 
@@ -60,17 +173,27 @@ L [ - ]⅋ R = L ⊗ R
 
 ### Contexts
 
+A context is a simple list of entries, i.e. codes paired with an
+optional side. Absence of the side corresponds to the session not
+being started yet: in this situation we say that the channel is "new".
+
 \begin{code}
-Cx = List (1+ Side × Code)
+Cx = List Entry
 \end{code}
+
+`is¿` means "is it safe to duplicate this entry?".
 
 \begin{code}
 is¿ : Entry → Set
 is¿ (> + , (_ , _ , ¿ F)) = ⊤
 is¿ (> - , (_ , _ , ¡ F)) = ⊤
-is¿ (ε   ,             _) = ⊤
 is¿  _                    = ⊥
 \end{code}
+
+To construct a server we must check (at compile time) that it will be
+safe to duplicate all the channels that its runtime copies will have
+access to: `All¿` is the predicate over contexts which corresponds to
+this condition.
 
 \begin{code}
 All¿ : Cx → Set _
@@ -78,6 +201,8 @@ All¿ = All is¿
 \end{code}
 
 ### Splitting contexts
+
+We need to define what it means to split an (input) context in two.
 
 \begin{code}
 data SplitNew : Set where 
@@ -96,6 +221,10 @@ split (ε   , C) +- (L , R) = (L ∷ (> + , C)) , (R ∷ (> - , C))
 split (ε   , C) -+ (L , R) = (L ∷ (> - , C)) , (R ∷ (> + , C))
 \end{code}
 
+At `fork` time, if `Γ` is the input context, the user is asked to
+inhabit a `Splits Γ`, whose meaning as a pair of contexts is given by
+`splits`.
+
 \begin{code}
 Splits : ∀ Γ → Set _
 Splits = All Split
@@ -105,13 +234,15 @@ splits []       = [] , []
 splits (ds ,̇ s) = split _ s (splits ds)
 \end{code}
 
+`all-splits` is a generic functions which allows to lift `splits` to
+"boxed" predicates.
+
 \begin{code}
 all-splits : ∀ {lP}{P : Code → Set lP}{Γ} →
                      All (P ∘ snd) Γ →
                 (d : Splits Γ)       → 
                      All (P ∘ snd) (fst (splits d))
                    × All (P ∘ snd) (snd (splits d))
-
 all-splits                      ps       []         =
   [] , []
 all-splits {Γ = Γ ∷ (ε   , C)} (ps ,̇ p) (ds ,̇    +) =
@@ -128,6 +259,9 @@ all-splits {Γ = Γ ∷ (> _ , C)} (ps ,̇ p) (ds ,̇    -) =
   Σ.map  id          (flip _,̇_ p) (all-splits ps ds)
 \end{code}
 
+We use some patterns to deal more easily with dependent tuples and
+objects of type `Entry`.
+
 \begin{code}
 pattern %_  x = _ , x
 pattern %2_ x = % %  x
@@ -140,16 +274,41 @@ pattern _«« x = > - , %2 x
 
 ## Terms
 
+## Introduction
+
+Here we would like to provide a human-readable representation of the
+syntax which is encoded below, also discussing the choice of encoding.
+
+For now we limit ourselves to illustrating the Agda code step-by-step.
+
 ### Functors
+
+We define several (indexed) functors: we will obtain our process
+syntax by taking their fixpoint. While in the future we plan to move
+to codes for a universe of functors such as the ones cited above, for
+the purpose of illustrating the method we do not want to add further
+complications.
+
+Most of the productions are non-recursive, so we will first define
+some families in `Ty`.
 
 \begin{code}
 private Ty = Cx → Cx → Set₁
 \end{code}
 
+The functor corresponding to the `new` grammar production/constructor
+simply imposes that the output context contains a *new* channel,
+i.e. a channel whose side is `ε` (`Maybe.nothing`).
+
 \begin{code}
 New : Ty
 New Γ Δ = Σ _ λ F → Δ ≡ Γ ∷ ε , F
 \end{code}
+
+We can send and receive channels along channels: in the former case
+the sent session type is omitted from the output context, in the
+latter the context is extended with the type corresponding to the
+received channel.
 
 \begin{code}
 Send Receive : Ty
@@ -164,6 +323,90 @@ Receive Γ Δ = Σ (Side × _ × Code) λ W →
                 Δ ≡ replace (> s , %2 R) i ∷ L
 \end{code}
 
+Writing to and reading from channels changes the type accordingly,
+without necessarily introducing dependencies.
+
+\begin{code}
+Write Read : Ty
+Write Γ Δ = Σ (Σ Code λ { (I , J , T) → J × Side × Set }) λ W →
+            let (I , J , T) , j , s , O = W in
+            Σ ((> s , I , O , [ s ]Σ J T) ∈ Γ)
+              (_≡_ Δ ∘ replace (> s , %2 T))
+Read Γ Δ = Σ (Code × Side × _) λ W →
+           let (I , J , T) , s , O = W in
+           Σ ((> s , I , O , [ s ]Π J T) ∈ Γ)
+             (_≡_ Δ ∘ replace (> s , %2 T))
+\end{code}
+
+This functor "consumes" `` `^ `` from the session type: it "allows"
+you to choose a value from which the rest of the type is dependent,
+but *most often* this value will be forced by the type.
+
+\begin{code}
+At : Ty
+At Γ Δ = Σ (Σ _ λ I → Σ _ λ O → Σ (O → De I) λ _ → O × Side) λ W →
+         let I , O , T , o , s = W in
+         Σ ((> s , %2 `^ T) ∈ Γ)
+            (_≡_ Δ ∘ replace (> s , %2 T o))
+\end{code}
+
+Session types have "identity" codes `` `I `` as leaves, so to end a
+session we need to consume it and remove the type from the context.
+
+\begin{code}
+End : Ty
+End Γ Δ = Σ (Σ Set λ I → Set × I × Side) λ W →
+          let I , O , i , s = W in
+          Σ ((> s , (I , O , `I i)) ∈ Γ)
+            (_≡_ Δ ∘ evict)
+\end{code}
+
+The following definitions are actual (strictly positive) indexed
+functors: calls to the `F` argument correspond to recursion in the
+grammar.
+
+When forking, we need to split the input context sensibly (see
+`Splits` above): the child must do *all* `ΓR`, the continuation must
+do `ΓL`.
+
+\begin{code}
+Fork : Ty → Ty
+Fork F Γ Δ = Σ (Splits Γ) λ ds →
+             let ΓL , ΓR = splits ds in
+               F ΓR []
+             × Δ ≡ ΓL
+\end{code}
+
+A server process can only be launched in a context where it is
+possible to duplicate all channels.
+
+The server is located on the `+` side of the channel.
+
+\begin{code}
+Server : Ty → Ty
+Server F Γ Δ = Σ (Code × Side × _) λ W → let A , s , I , O = W in
+               Σ ((> s , I , O , [ s ]¡ A) ∈ Γ) λ i →
+                 All¿ Δ
+               × F (replace (> + , A) i) Δ
+               × Δ ≡ evict i
+\end{code}
+
+The client is positioned on the `-` side of the channel.
+
+In this case execution is synchronous: we account for the fact that
+the client might also interact on some other channels by passing `Δ`
+to `F`.
+
+\begin{code}
+Client : (Set → Ty) → Set → Ty
+Client F X Γ Δ = Σ (Code × Side × _) λ W → let A , s , I , O = W in
+                 Σ ((> s , I , O , [ s ]¿ A) ∈ Γ) λ i →
+                   F X (replace (> - , A) i) Δ
+\end{code}
+
+We are free to run clients as many times as we want (`Ctr`), or even
+refrain from doing so (`Wk`).
+
 \begin{code}
 Wk Ctr : Ty
 Wk Γ Δ = Σ (Code × Side × _) λ W →
@@ -177,66 +420,8 @@ Ctr Γ Δ = Σ (Code × Side × _) λ W →
           × Δ ≡ Γ ∷ τ
 \end{code}
 
-\begin{code}
-Write Read : Ty
-Write Γ Δ = Σ (Σ Code λ { (I , J , T) → J × Side × Set }) λ W →
-            let (I , J , T) , j , s , O = W in
-            Σ ((> s , I , O , [ s ]Σ J T) ∈ Γ)
-              (_≡_ Δ ∘ replace (> s , %2 T))
-
-Read Γ Δ = Σ (Code × Side × _) λ W →
-           let (I , J , T) , s , O = W in
-           Σ ((> s , I , O , [ s ]Π J T) ∈ Γ)
-             (_≡_ Δ ∘ replace (> s , %2 T))
-\end{code}
-
-\begin{code}
-At : Ty
-At Γ Δ = Σ (Σ _ λ I → Σ _ λ O → Σ (O → I ▹ ⊤) λ _ → O × Side) λ W →
-         let I , O , T , o , s = W in
-         Σ ((> s , %2 `^ T) ∈ Γ)
-            (_≡_ Δ ∘ replace (> s , %2 T o))
-\end{code}
-
-\begin{code}
-End : Ty
-End Γ Δ = Σ (Σ Set λ I → Set × I × Side) λ W →
-          let I , O , i , s = W in
-          Σ ((> s , (I , O , `I i)) ∈ Γ)
-            (_≡_ Δ ∘ evict)
-\end{code}
-
-The forked process must do *all* `ΓR`, the next process must do `ΓL`.
-
-\begin{code}
-Fork : Ty → Ty
-Fork F Γ Δ = Σ (Splits Γ) λ ds →
-             let ΓL , ΓR = splits ds in
-               F ΓR []
-             × Δ ≡ ΓL
-\end{code}
-
-By convention the server positions itself on the `+` side of the
-channel.
-
-\begin{code}
-Server : Ty → Ty
-Server F Γ Δ = Σ (Code × Side × _) λ W → let A , s , I , O = W in
-               Σ ((> s , I , O , [ s ]¡ A) ∈ Γ) λ i →
-                 All¿ Δ
-               × F (replace (> + , A) i) Δ
-               × Δ ≡ evict i
-\end{code}
-
-By convention the client positions itself on the `-` side of the
-channel.
-
-\begin{code}
-Client : (Set → Ty) → Set → Ty
-Client F X Γ Δ = Σ (Code × Side × _) λ W → let A , s , I , O = W in
-                 Σ ((> s , I , O , [ s ]¿ A) ∈ Γ) λ i →
-                   F X (replace (> - , A) i) Δ
-\end{code}
+To add corecursion, we must first define what we consider a *guarded*
+(hence, hopefully, *productive*) session.
 
 \begin{code}
 Guarded : ∀ {I O} → I ▹ O → Set₁
@@ -248,13 +433,15 @@ Guarded (%3 L ⊗ R) = Guarded L × Guarded R
 Guarded (%3 L ⅋ R) = Guarded L × Guarded R
 Guarded (¡ F     ) = ⊥
 Guarded (¿ F     ) = ⊥
-Guarded (`μ F o  ) = ∀ o → Guarded (F o)
-Guarded (`ν F o  ) = ∀ o → Guarded (F o)
+Guarded (`ν F _  ) = ∀ o → Guarded (F o)
 \end{code}
+
+To provide syntax to productive nested loops that run for a possibly
+infinite amount of time, we use the following definition:
 
 \begin{code}
 CoRec : (Set → Ty) → Set → Ty
-CoRec F X Γ Δ = Σ (Side × Σ _ λ I → Σ _ λ O → (O → (I ⊎ O) ▹ ⊤) × O) λ W →
+CoRec F X Γ Δ = Σ (Side × Σ _ λ I → Σ _ λ O → (O → De (I ⊎ O)) × O) λ W →
                 let s , I , O , T , o = W in 
                 Σ ((> s , %2 `ν T o) ∈ Γ) λ i →
                   ((o : O) →   Guarded (T o)
@@ -262,12 +449,21 @@ CoRec F X Γ Δ = Σ (Side × Σ _ λ I → Σ _ λ O → (O → (I ⊎ O) ▹ �
                 × Δ ≡ evict i
 \end{code}
 
-### Small functors
+### Small, *collapsed* functors
+
+\begin{code}
+private [Ty] = Cx → Cx → Set
+\end{code}
+
+At some point we will want to switch to *small* functors (compare
+`[Ty]` with `Ty`), also avoiding us to require witnesses which are
+actually *forced* (see Edwin Brady et al's "Inductive Families Need
+Not Store Their Indices").
+
+Here are a couple examples of how we plan to proceed.
 
 \begin{code}
 module Small where
-
-  private [Ty] = Cx → Cx → Set
 
   [New] : Ty
   [New] Γ (Δ ∷ ε , F) = Γ ≡ Δ
@@ -287,7 +483,17 @@ module Small where
                 case isI? i of 1+.maybe (λ _ → Δ ≡ Ix.− _ i) ⊥
 \end{code}
 
+While it seems possible to treat all the syntax in this way, we prefer
+to use the large version for now as we think it leads to better type
+errors when constructing programs.
+
+We will investigate the possibility of using the large version as
+syntax for the small one, executing the translation at compile time.
+
 ### Tags
+
+We adopt a "tagful" syntax, where nodes of the syntax tree are made of
+dependent pairs whose first component is of type `Tag`.
 
 \begin{code}
 module T where
@@ -296,15 +502,18 @@ module T where
     new fork       : Tag
     send recv      : Tag
     !! ?? wk ctr   : Tag
-    write read     : Tag
-    end            : Tag
     corec          : Tag
+    write read     : Tag
     at             : Tag
+    end            : Tag
 
 open T using (Tag)
 \end{code}
 
-### Summing up
+### The tagged family of functors
+
+The type of the second component is given by the following family,
+which groups all the above functors.
 
 \begin{code}
 π : Tag → (Set → Ty) → Set → Ty
@@ -316,17 +525,27 @@ open T using (Tag)
 π T.??    T X Γ Δ = Client  T X  Γ Δ
 π T.wk    T X Γ Δ = Wk           Γ Δ                 × X ≡ ⊤
 π T.ctr   T X Γ Δ = Ctr          Γ Δ                 × X ≡ ⊤
-π T.write T X Γ Δ = Write        Γ Δ                 × X ≡ ⊤
 π T.corec T X Γ Δ = CoRec   T X  Γ Δ
+π T.write T X Γ Δ = Write        Γ Δ                 × X ≡ ⊤
 π T.read  T X Γ Δ = Σ (Read Γ Δ) λ p →                          
                     let ((_ , J , _) , _) , _ = p in   X ≡ J       
-π T.end   T X Γ Δ = Σ (End  Γ Δ) λ p →                             
-                    let (I , _ , _) , _ = p in         X ≡ I
 π T.at    T X Γ Δ = Σ (At Γ Δ) λ p →
                     let (_ , O , _) , _ = p in         X ≡ O
+π T.end   T X Γ Δ = Σ (End  Γ Δ) λ p →                             
+                    let (I , _ , _) , _ = p in         X ≡ I
 \end{code}
 
 ### Process terms
+
+As already stated, we plan to adopt codes for indexed functors instead
+of defining those directly. We could then simply use a generic indexed
+free monad construction, as in McBride's "Kleisli Arrows of Outrageous
+Fortune", encoding our "Atkey-style" parameterisation in the way
+described there.
+
+To make things simpler we use the following definition for now: this
+is neither a monad nor a monad transfomer, it is just convenient
+temporary syntax.
 
 \begin{code}
 module Process where
@@ -344,7 +563,17 @@ module Process where
 open Process using (_[_⊢_]>_ ; ⇑_ ; _»=_ ; [_]) public
 \end{code}
 
-### Intro
+Note that referring to the above operators as "strictly positive
+functors" as we did, while very reasonable from their definitions, is
+also justified by the fact that Agda's positivity checker accepts
+`_[_⊢_]>_`.
+
+### Syntactic sugar
+
+#### Patterns
+
+To construct and pattern match on processes we make extensive use of
+Agda's `pattern` facility.
 
 \begin{code}
 pattern fork    d x    = [ T.fork  , (d , x , <>)                 , <> ] 
@@ -364,6 +593,14 @@ pattern at      i      = at/ i _
 pattern corec   i o gp = [ T.corec , (%4 o) , (i , (gp , <>))          ]
 \end{code}
 
+(We plan to also define a view for these patterns, so that Agda's
+interactive splitting (`C-c C-c`) can be recovered after a `with`)
+
+#### Monadic binding notation
+
+For the binding operator we mimic Haskell's `do`-notation with a
+`syntax` declaration.
+
 \begin{code}
 infixr 5 bind
 bind : ∀ {M Γ Ξ Δ X Y} → Γ [ M ⊢ Y ]> Ξ  → 
@@ -377,6 +614,12 @@ infixr 5 _»_
 _»_ : ∀ {M Γ Ξ Δ X Y} → Γ [ M ⊢ X ]> Ξ → Ξ [ M ⊢ Y ]> Δ → Γ [ M ⊢ Y ]> Δ
 m » n = m »= λ _ → n
 \end{code}
+
+#### `write` and `read` dependently
+
+We added `` `^ `` (in Strictly Positive Families we would have used ``
+`Δ ``) to recover the *possibility* of making use of data exchanged by
+`write` and `read` at the type level.
 
 \begin{code}
 put : ∀ {M Γ}{I O A : Set}{T : A → De I}{s} →
@@ -393,13 +636,12 @@ get i f = read i »= λ a → at (∈replace i) » f a
 
 ## Haskell evaluator
 
-What follows should be considered an extension to the *trusted base*.
+To make an efficient use of Haskell channels, while forgetting the
+data required to compute their "changing" types, we resort to making a
+*sensible* use of **unsafe** casts. What follows should therefore be
+considered as an extension to the *trusted base*.
 
-There is no correctness proof for this evaluator.
-
-To make an efficient use of Haskell channels while forgetting the data
-required to compute their "changing" types we resort to **unsafe**
-casts.
+We provide **no correctness proof** for this evaluator.
 
 \begin{code}
 private
@@ -428,11 +670,20 @@ open import Control.Concurrent.Chan.Synchronous
 module CS = Control.Concurrent.Chan.Synchronous
 \end{code}
 
+We need our channels to be untyped, to obtain which we postulate an
+abstract type and use unsafe coercions to and from it.
+
+This is similar to Pucella and Tov's embedding in ["Haskell Session
+Types with (Almost) No
+Class"](http://www.eecs.harvard.edu/~tov/pubs/haskell-session-types/).
+
 \begin{code}
 postulate Abs : Set
 
 UChan = Chan Abs
 \end{code}
+
+The channels for a context.
 
 \begin{code}
 ⟦_⟧Cx : Cx → Set₁
@@ -444,6 +695,12 @@ lookupUChan : ∀ {Γ C} → (i : C ∈ Γ) → ⟦ Γ ⟧Cx → UChan
 lookupUChan i cs = snd (lookupAll i cs)
 \end{code}
 
+We need some Haskell helpers.
+
+Note that our channels are ultimately implemented on top of Jesse
+Tov's `synchronous-channels` package: currently all the interactions
+are therefore synchronous (blocking).
+
 \begin{code}
 infixl 1 _>>_
 
@@ -454,6 +711,8 @@ mapIO : ∀ {lA lB}{A : Set lA}{B : Set lB} → (A → B) → IO A → IO B
 mapIO f xs = xs >>= return ∘ f
 \end{code}
 
+Every communication with the untyped channels uses `unsafeCoerce`.
+
 \begin{code}
 writeUChan : {A : Set} → UChan → A → IO C.<>
 writeUChan c = writeChan c ∘ unsafeCoerce
@@ -462,43 +721,75 @@ readUChan : {A : Set} → UChan → IO A
 readUChan {A = A} c = readChan c >>= return ∘ unsafeCoerce
 \end{code}
 
-The actual evaluator, to implement which we disable termination
-checking.
+Here is the actual test evaluator, to implement which we disable
+termination checking: we already use "unsafe" features so we do not
+bother defining a *coinductive* wrapper as in the `IO` module of
+Agda's standard library.
 
 \begin{code}
 {-# NO_TERMINATION_CHECK #-}
 run : {Γ Δ : Cx}{X : Set} → Γ [IO X ]> Δ → ⟦ Γ ⟧Cx → IO (X × ⟦ Δ ⟧Cx)
 \end{code}
 
+We map the embedded monadic actions to themselves, and the binding
+syntax to the binding operator for the `IO` monad.
+
 \begin{code}
 run (⇑ m           ) cs = mapIO (flip _,_ cs) m                                           
                                                                                           
 run (m »= f        ) cs = run m cs >>= λ { (x , cs) → run (f x) cs }                      
 \end{code}                                                                                
-                                                                                          
+
+`new` just creates a new channel.
+
 \begin{code}                                                                              
-run (new           ) cs = newChan >>= λ c → return (_ , (cs ,̇ c))                         
+run (new           ) cs = newChan >>= λ c → return (_ , (cs ,̇ c))
+\end{code}
+
+`forks x` interprets the `Splits` in `s` obtaining two lists of
+channels `ls` and `rs`: it keeps `ls` for the parent thread and leaves
+access to `rs` to the child (`x`).
                                                                                           
-run (fork       d x) cs = let ls , rs = all-splits cs d in                                
+\begin{code}
+run (fork       s x) cs = let ls , rs = all-splits cs s in
                           forkIO (run x rs >> return ⟨⟩) >>                               
                           return (tt , ls)                                                
 \end{code}                                                                                
-                                                                                          
+
+`send i j` writes channel `i` on channel `j` and frees the
+continuation from the burden of communicating along `i`.
+
+We could avoid many uses of `unsafeCoerce` in the following but we
+think it is more efficient to avoid calling functions like
+`all-replace` as in the commented-out code: they perform no operations
+on the actual lists of *untyped* channels.
+
+The usages of `unsafeCoerce` which are more difficult to avoid or
+justify are those inside every call to `readUChan` and `writeUChan`.
+
 \begin{code}                                                                              
 run (send       i j) cs = let chanToSend    = lookupUChan        i  cs in                 
                           let chanToWriteOn = lookupUChan (wk/ i j) cs in                 
                           writeUChan chanToWriteOn chanToSend >>
                           return (tt , unsafeCoerce (all-evict i cs))
-                          -- return (tt , all-replace j (all-evict i cs)                     
-                          --                            chanToWriteOn)                       
+                          -- return (tt , all-replace j (all-evict i cs)
+                          --                            chanToWriteOn)
+\end{code}
+
+`receive` receives a channel from channel `i` and allows/forces the
+continuation to also take care of it.
                                                                                           
+\begin{code}
 run (receive      i) cs = let chanToReadFrom = lookupUChan i cs in                        
                           readUChan chanToReadFrom >>= λ receivedChan →                   
                           return (tt , (unsafeCoerce cs ,̇ receivedChan))                  
-\end{code}                                                                                
-                                                                                          
+\end{code}
+
+`accept i a p` forks a process that waits for channels: whenever one
+is received it spawns a new copy of the server along it.
+
 \begin{code}                                                                              
-run (accept i   a p) cs = forkIO server >> return (tt , all-evict i cs)                   
+run (accept   i a p) cs = forkIO server >> return (tt , all-evict i cs)                   
   where c = lookupUChan i cs                                            
         service : UChan → IO _                                          
         service n = run p (all-replace i cs n) >> return ⟨⟩
@@ -506,31 +797,62 @@ run (accept i   a p) cs = forkIO server >> return (tt , all-evict i cs)
         server = readUChan c        >>= λ n →                           
                  forkIO (service n) >>                                  
                  server                                                 
+\end{code}
+
+`connect i p` creates a channel and sends it along the channel `i`,
+which is (or should be) shared by construction with a server, then it
+becomes process `p`.
                                                                                           
+\begin{code}
 run (connect    i p) cs = newChan                         >>= λ n →                       
                           writeUChan (lookupUChan i cs) n >>                              
                           run p (all-replace i cs n)
+\end{code}
+
+`wont i` avoids starting the client/server interaction with the server
+which waits for channels on `i`.
                                                                                           
-run (wont         i) cs = return (tt , all-evict i cs)                                    
+\begin{code}
+run (wont         i) cs = return (tt , all-evict i cs)
+\end{code}
+
+`twice i` duplicates the server which waits for channels on `i`.
                                                                                           
+\begin{code}
 run (twice        i) cs = return (tt , (cs ,̇ lookupUChan i cs))                           
-\end{code}                                                                                
+\end{code}
+
+`write i x` writes `x` on channel `i`.
                                                                                           
 \begin{code}                                                                              
 run (write      i x) cs = let c = lookupUChan i cs in                                     
                           writeUChan c x >>                                               
                           return (tt , unsafeCoerce cs)                                   
+\end{code}
+
+`read i` reads from `i` and returns what it read.
                                                                                           
+\begin{code}
 run (read         i) cs = let c = lookupUChan i cs in                                     
                           readUChan c >>= λ x →
                           return (x , unsafeCoerce cs)                                    
-\end{code}                                                                                
+\end{code}
+
+`end i` terminates the (sub)session
                                                                                           
 \begin{code}                                                                              
 run (end/       i r) cs = return (r , all-evict i cs)                                     
-                                                                                          
+\end{code}
+
+`at/ i o` simply returns `o`.
+
+\begin{code}
 run (at/        i o) cs = return (o , unsafeCoerce cs)                                    
 \end{code}
+
+`corec` enters a loop whose body is contained in `gp`: the coiteration
+will possibly be exited whenever the value the process returns is `inl
+x` for some `x`.
 
 \begin{code}
 run (corec   i o gp) cs = aux o
@@ -545,4 +867,22 @@ run[] : ∀ {X} →  IOProc X → IO X
 run[] P = mapIO fst (run P [])
 \end{code}
 
-## [Examples](Session.Examples.html)
+Note that as the evaluator allows for processes that embed any `IO`
+action one could easily add unwanted behaviours: the user is still
+free to capture a fragment of `IO` to be considered *safe* and simply
+compose the evaluator after a translation phase to `IO`.
+
+For simplicity, the currently provided
+[examples](Session.Examples.html) just use `IO` for basic operations
+like suspending processes for finite amounts of time or accessing the
+standard output.
+
+## Acknowledgments
+
+I must thank
+
+- Claudio Sacerdoti Coen, who provided many useful comments on a
+  previous version of this implementation;
+
+- Peter Morris, who originally taught me the above technique to
+  attempt to make families small by computation.

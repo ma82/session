@@ -93,7 +93,7 @@ odd  (suc n) = even n
 \end{code}
 
 A user of a stack of booleans which simply pushes `n` alternating
-booleans.
+booleans, after which it *stops* interacting.
 
 \begin{code}
 stack-user : (xs : List Bool)(n : ℕ) → [] ∷ Stack xs n (λ _ _ → pred) ««
