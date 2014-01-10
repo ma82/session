@@ -68,7 +68,6 @@ Cx = List (1+ Side × Code)
 is¿ : Entry → Set
 is¿ (> + , (_ , _ , ¿ F)) = ⊤
 is¿ (> - , (_ , _ , ¡ F)) = ⊤
-is¿ (ε   ,             _) = ⊤
 is¿  _                    = ⊥
 \end{code}
 
