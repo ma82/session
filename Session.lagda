@@ -23,7 +23,7 @@ mutual
     `^      : (T : O → De I)              → I ▹ O
     _⊗_ _⅋_ : (L : Entry)(R : I ▹ O)      → I ▹ O
     ¡_ ¿_   : Code                        → I ▹ O
-    `μ `ν   : (F : O → De (I ⊎ O))(o : O) → I ▹ O
+    `ν      : (F : O → De (I ⊎ O))(o : O) → I ▹ O
 
 `Σ^ `Π^ : {I O : Set}(S : Set)(T : S → De I) → I ▹ O
 `Σ^ S T = `Σ S (`^ T)
@@ -247,8 +247,7 @@ Guarded (%3 L ⊗ R) = Guarded L × Guarded R
 Guarded (%3 L ⅋ R) = Guarded L × Guarded R
 Guarded (¡ F     ) = ⊥
 Guarded (¿ F     ) = ⊥
-Guarded (`μ F o  ) = ∀ o → Guarded (F o)
-Guarded (`ν F o  ) = ∀ o → Guarded (F o)
+Guarded (`ν F _  ) = ∀ o → Guarded (F o)
 \end{code}
 
 \begin{code}
