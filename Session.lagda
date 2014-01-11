@@ -27,7 +27,7 @@ designing a programmer-friendly interface.
 
 We provide an evaluation function making use of the Haskell FFI: it is
 therefore possible to compile and execute programs in the DSL as
-Haskell process (see the [http://github.com/ma82/session/](README) for
+Haskell process (see the [README](http://github.com/ma82/session/) for
 instructions on how to attempt compilation). Note that in order to
 obtain the evaluator (see the end of this file) we had to (locally)
 disable totality checking and to use `unsafeCoerce` in several places.
