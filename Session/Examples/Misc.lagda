@@ -33,12 +33,11 @@ module Basic (M : Set → Set)(η : ∀ {X} → X → M X)
 module Ex1 (M : Set → Set)(η : ∀ {X} → X → M X) where
 
   ex1 : [] [ M ⊢ ⊤ ]> []
-  ex1 = new
-      » fork ([] ,̇ -+) (T ∋   write Z| 42
-                            » end   Z|   )
+  ex1 = new⊤
+      » fork ([] ,̇ -+) (  write Z| 42
+                        » end   Z|   )
       » _ <- read Z|
       ⋯ end Z|
-      where T = [] ∷ (_ , ⊤ , ⊤ , _) [ _ ⊢ _ ]> []
 \end{code}
 
 \begin{code}
@@ -53,10 +52,9 @@ open Ex1 IO return
 
 \begin{code}
 ex2 : IOProc _
-ex2 = new
+ex2 = new⊤
     » ⇑ putStrLn « "A channel was created!" »
-    » fork ([] ,̇ -+) (T ∋
-                        ⇑ putStrLn « "Child has started" »
+    » fork ([] ,̇ -+) (  ⇑ putStrLn « "Child has started" »
                       » ⇑ threadDelay onesec
                       » write Z| "Message"
                       » ⇑ putStrLn « "Child has written" »
@@ -70,7 +68,6 @@ ex2 = new
     » ⇑ threadDelay onesec
     » end Z|
     » ⇑ putStrLn « "Parent has finished" »
-  where T = [] ∷ (_ , ⊤ , ⊤ , _) [ _ ⊢ _ ]> []
 \end{code}
 
 ## Send and receive
@@ -78,9 +75,9 @@ ex2 = new
 \begin{code}
 ex3 : IOProc ⊤
 ex3 = ⇑ putStrLn « "Enter 0" »
-    » l <- new
-    ⋯ r <- new
-    ⋯ fork ([] ,̇ +- ,̇ +-) (T ∋ ⇑ putStrLn « "Enter 1" »
+    » l <- new⊤
+    ⋯ r <- new⊤
+    ⋯ fork ([] ,̇ +- ,̇ +-) (  ⇑ putStrLn « "Enter 1" »
                            » write Z| « "1 -> 0" »
                            » send Z| Z|
                            » a <- read Z|
@@ -98,7 +95,6 @@ ex3 = ⇑ putStrLn « "Enter 0" »
     ⋯ y <- read Z|
     ⋯ ⇑ (putStrLn x >> putStrLn y >> putStrLn « "Exit 0" »)
     » end Z|
-  where T = [] ∷ % (⊤ , ⊤ , _) ∷ % (⊤ , ⊤ , _) [IO _ ]> _
 \end{code}
 
 ## Main program
