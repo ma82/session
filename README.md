@@ -76,8 +76,8 @@ can be non-deterministic, though.
 
 ## Contacts
 
-[Mail](mailto:matteo.acerbi@gmail.com)
-[Site](http://ma82.github.io/)
+- [Mail](mailto:matteo.acerbi@gmail.com)
+- [Site](http://ma82.github.io/)
 
 ## Participate!
 
