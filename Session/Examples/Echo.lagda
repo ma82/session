@@ -13,13 +13,22 @@ open import Data.String
 
 Ty : Code
 Ty = ⊤ , ⊤ , `Π^ String λ x → `Σ (Σ String (_≡_ x)) (`I _)
+\end{code}
 
+The server receives a string and sends back the same string, together
+with an (irrelevant) proof of their equality.
+
+\begin{code}
 server : [] ∷ (> + , ⊤ , ⊤ , ¡ Ty) [IO ⊤ ]> []
 server = accept Z| [] (get Z| λ x → ⇑ putStrLn « "Server received " ++ x »
                                   » write Z| (x , <>)
                                   » ⇑ putStrLn « "Server sent "     ++ x »
                                   » end Z|)
+\end{code}
 
+The client connects to the server three times.
+
+\begin{code}
 client : [] ∷ (> - , ⊤ , ⊤ , ¡ Ty) [IO ⊤ ]> []
 client = twice Z| » twice Z| »
          x <- connect Z| (put Z| "A" » read Z| »= λ x → end Z| » ⇑ return x)
@@ -29,8 +38,9 @@ client = twice Z| » twice Z| »
        » z <- connect Z| (put Z| "C" » read Z| »= λ x → end Z| » ⇑ return x)
        ⋯ ⇑ putStrLn « "Client received " ++ fst z »
        » ⇑ return tt
+\end{code}
 
-
+\begin{code}
 main : IO.IO C.<>
 main = run test [] >> C.threadDelay C.onesec where
   test = x <- new

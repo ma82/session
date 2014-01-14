@@ -2,6 +2,9 @@
 
 # Linear dependent session types [WIP]
 
+What follows is an incomplete draft: do not read this unless given
+explicit permission by the author. :-)
+
 ## Introduction
 
 This document describes and contains an Agda implementation of an
@@ -16,7 +19,7 @@ We nonetheless adopt notations and ideas from more theoretical works
 in the fields of process algebras and linear logic, in particular from
 Philip Wadler's "Propositions as Sessions" paper (for the main type
 and terms constructs), and from the recent line of work by Caires,
-Pfenning and Toninho (monadic syntax, corecursion and dependent
+Pfenning and Toninho (on monadic syntax, corecursion and dependent
 types).
 
 The immediate goal of this development is not to formalise a typed
@@ -307,7 +310,7 @@ New Γ Δ = Σ _ λ F → Δ ≡ Γ ∷ ε , F
 
 We can send and receive channels along channels: in the former case
 the sent session type is omitted from the output context, in the
-latter the context is extended with the type corresponding to the
+latter the context is extended with the entry corresponding to the
 received channel.
 
 \begin{code}
@@ -455,10 +458,10 @@ CoRec F X Γ Δ = Σ (Side × Σ _ λ I → Σ _ λ O → (O → De (I ⊎ O)) �
 private [Ty] = Cx → Cx → Set
 \end{code}
 
-At some point we will want to switch to *small* functors (compare
-`[Ty]` with `Ty`), also avoiding us to require witnesses which are
-actually *forced* (see Edwin Brady et al's "Inductive Families Need
-Not Store Their Indices").
+We might want to switch to *small* functors (compare `[Ty]` and `Ty`),
+also avoiding us to require witnesses which are actually *forced* (see
+Edwin Brady et al's "Inductive Families Need Not Store Their
+Indices").
 
 Here are a couple examples of how we plan to proceed.
 
@@ -488,7 +491,8 @@ to use the large version for now as we think it leads to better type
 errors when constructing programs.
 
 We will investigate the possibility of using the large version as
-syntax for the small one, executing the translation at compile time.
+syntax for the small one, by executing the translation at compile
+time.
 
 ### Tags
 
@@ -698,8 +702,8 @@ lookupUChan i cs = snd (lookupAll i cs)
 We need some Haskell helpers.
 
 Note that our channels are ultimately implemented on top of Jesse
-Tov's `synchronous-channels` package: currently all the interactions
-are therefore synchronous (blocking).
+Tov's `synchronous-channels` package: for this reason, currently all
+the interactions are synchronous (blocking).
 
 \begin{code}
 infixl 1 _>>_
@@ -764,8 +768,8 @@ think it is more efficient to avoid calling functions like
 `all-replace` as in the commented-out code: they perform no operations
 on the actual lists of *untyped* channels.
 
-The usages of `unsafeCoerce` which are more difficult to avoid or
-justify are those inside every call to `readUChan` and `writeUChan`.
+The usages of `unsafeCoerce` which are more difficult justify are
+those inside every call to `readUChan` and `writeUChan`.
 
 \begin{code}                                                                              
 run (send       i j) cs = let chanToSend    = lookupUChan        i  cs in                 
@@ -870,12 +874,14 @@ run[] P = mapIO fst (run P [])
 Note that as the evaluator allows for processes that embed any `IO`
 action one could easily add unwanted behaviours: the user is still
 free to capture a fragment of `IO` to be considered *safe* and simply
-compose the evaluator after a translation phase to `IO`.
+compose this evaluator after a translation phase to `IO`.
 
 For simplicity, the currently provided
 [examples](Session.Examples.html) just use `IO` for basic operations
 like suspending processes for finite amounts of time or accessing the
 standard output.
+
+## Conclusion and further work
 
 ## Acknowledgments
 
@@ -886,3 +892,4 @@ I must thank
 
 - Peter Morris, who originally taught me the above technique to
   attempt to make families small by computation.
+
