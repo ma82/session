@@ -389,6 +389,13 @@ get : ∀ {M Γ Δ}{I O A B : Set}{T : A → De I}{s}
 get i f = read i »= λ a → at (∈ud i) » f a
 \end{code}
 
+#### `new` channel with ⊤ as initial and final state
+
+\begin{code}
+new⊤ : ∀ {Γ M F} → Γ [ M ⊢ ⊤ ]> Γ ∷ (ε , ⊤ , ⊤ , F)
+new⊤ = new
+\end{code}
+
 ## Haskell evaluator
 
 What follows should be considered an extension to the *trusted base*.
