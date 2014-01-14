@@ -38,10 +38,10 @@ O ◂ I = I ▹ O
 ### Types and sides
 
 \begin{code}
-[_]Σ   [_]Π   : Side  → {I O : Set}(S : Set)(T : I ▹ S)     → I ▹ O
-[_]Σ^  [_]Π^  : Side  → {I O : Set}(S : Set)(T : S → I ▹ ⊤) → I ▹ O
-_[_]⊗_ _[_]⅋_ : Entry → Side → {I O : Set} → I ▹ O          → I ▹ O
-[_]¡_  [_]¿_  : Side  → Code  → {I O : Set}                 → I ▹ O
+[_]Σ   [_]Π   : Side  → {I O : Set}(S : Set)(T : I ▹ S)    → I ▹ O
+[_]Σ^  [_]Π^  : Side  → {I O : Set}(S : Set)(T : S → De I) → I ▹ O
+_[_]⊗_ _[_]⅋_ : Entry → Side → {I O : Set} → I ▹ O         → I ▹ O
+[_]¡_  [_]¿_  : Side  → Code  → {I O : Set}                → I ▹ O
 [ + ]Σ     = `Σ
 [ - ]Σ     = `Π
 [ + ]Π     = `Π 
@@ -61,7 +61,7 @@ L [ - ]⅋ R = L ⊗ R
 ### Contexts
 
 \begin{code}
-Cx = List (1+ Side × Code)
+Cx = List Entry
 \end{code}
 
 \begin{code}
