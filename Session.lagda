@@ -1,14 +1,10 @@
 [2013-2014 Matteo Acerbi](https://www.gnu.org/licenses/gpl.html)
 
-# Linear dependent session types
-
 \begin{code}
 module Session where
 
 open import Base
 \end{code}
-
-## Types
 
 \begin{code}
 mutual 
@@ -35,8 +31,6 @@ _◂_ : Set → Set → Set₁
 O ◂ I = I ▹ O
 \end{code}
 
-### Types and sides
-
 \begin{code}
 [_]Σ   [_]Π   : Side  → {I O : Set}(S : Set)(T : I ▹ S)    → I ▹ O
 [_]Σ^  [_]Π^  : Side  → {I O : Set}(S : Set)(T : S → De I) → I ▹ O
@@ -58,8 +52,6 @@ L [ - ]⅋ R = L ⊗ R
 [ - ]¿ F   = ¡ F
 \end{code}
 
-### Contexts
-
 \begin{code}
 Cx = List Entry
 \end{code}
@@ -75,8 +67,6 @@ is¿  _                    = ⊥
 All¿ : Cx → Set _
 All¿ = All is¿
 \end{code}
-
-### Splitting contexts
 
 \begin{code}
 data SplitNew : Set where 
@@ -136,10 +126,6 @@ pattern %4_ x = % %3 x
 pattern »»_ x = > + , %2 x
 pattern _«« x = > - , %2 x
 \end{code}
-
-## Terms
-
-### Functors
 
 \begin{code}
 private Ty = Cx → Cx → Set₁
@@ -205,8 +191,6 @@ End Γ Δ = Σ (Σ Set λ I → Set × I × Side) λ W →
             (_≡_ Δ ∘ rm)
 \end{code}
 
-The forked process must do *all* `ΓR`, the next process must do `ΓL`.
-
 \begin{code}
 Fork : Ty → Ty
 Fork F Γ Δ = Σ (Splits Γ) λ ds →
@@ -214,9 +198,6 @@ Fork F Γ Δ = Σ (Splits Γ) λ ds →
                F ΓR []
              × Δ ≡ ΓL
 \end{code}
-
-By convention the server positions itself on the `+` side of the
-channel.
 
 \begin{code}
 Server : Ty → Ty
@@ -226,9 +207,6 @@ Server F Γ Δ = Σ (Code × Side × _) λ W → let A , s , I , O = W in
                × F (ud (> + , A) i) Δ
                × Δ ≡ rm i
 \end{code}
-
-By convention the client positions itself on the `-` side of the
-channel.
 
 \begin{code}
 Client : (Set → Ty) → Set → Ty
@@ -260,8 +238,6 @@ CoRec F X Γ Δ = Σ (Side × Σ _ λ I → Σ _ λ O → (O → (I ⊎ O) ▹ �
                 × Δ ≡ rm i
 \end{code}
 
-### Small functors
-
 \begin{code}
 module Small where
 
@@ -285,8 +261,6 @@ module Small where
                 case isI? i of 1+.maybe (λ _ → Δ ≡ Ix.− _ i) ⊥
 \end{code}
 
-### Tags
-
 \begin{code}
 module T where
 
@@ -301,8 +275,6 @@ module T where
 
 open T using (Tag)
 \end{code}
-
-### Summing up
 
 \begin{code}
 π : Tag → (Set → Ty) → Set → Ty
@@ -324,8 +296,6 @@ open T using (Tag)
                     let (_ , O , _) , _ = p in         X ≡ O
 \end{code}
 
-### Process terms
-
 \begin{code}
 module Process where
 
@@ -341,8 +311,6 @@ module Process where
 
 open Process using (_[_⊢_]>_ ; ⇑_ ; _»=_ ; [_]) public
 \end{code}
-
-### Intro
 
 \begin{code}
 pattern fork    d x    = [ T.fork  , (d , x , <>)                 , <> ] 
@@ -389,22 +357,10 @@ get : ∀ {M Γ Δ}{I O A B : Set}{T : A → De I}{s}
 get i f = read i »= λ a → at (∈ud i) » f a
 \end{code}
 
-#### `new` channel with ⊤ as initial and final state
-
 \begin{code}
 new⊤ : ∀ {Γ M F} → Γ [ M ⊢ ⊤ ]> Γ ∷ (ε , ⊤ , ⊤ , F)
 new⊤ = new
 \end{code}
-
-## Haskell evaluator
-
-What follows should be considered an extension to the *trusted base*.
-
-There is no correctness proof for this evaluator.
-
-To make an efficient use of Haskell channels while forgetting the data
-required to compute their "changing" types we resort to **unsafe**
-casts.
 
 \begin{code}
 private
@@ -467,9 +423,6 @@ readUChan : {A : Set} → UChan → IO A
 readUChan {A = A} c = readChan c >>= return ∘ unsafeCoerce
 \end{code}
 
-The actual evaluator, to implement which we disable termination
-checking.
-
 \begin{code}
 {-# NO_TERMINATION_CHECK #-}
 run : {Γ Δ : Cx}{X : Set} → Γ [IO X ]> Δ → ⟦ Γ ⟧Cx → IO (X × ⟦ Δ ⟧Cx)
@@ -495,7 +448,7 @@ run (send       i j) cs = let chanToSend    = lookupUChan        i  cs in
                           writeUChan chanToWriteOn chanToSend >>
                           return (tt , unsafeCoerce (all-rm i cs))
                           -- return (tt , all-ud j (all-rm i cs)                     
-                          --                            chanToWriteOn)                       
+                          --                       chanToWriteOn)                       
                                                                                           
 run (receive      i) cs = let chanToReadFrom = lookupUChan i cs in                        
                           readUChan chanToReadFrom >>= λ receivedChan →                   
@@ -543,11 +496,7 @@ run (corec   i o gp) cs = aux o
                     uc ⊎.[ cu return , (λ o _ → aux o) ]
 \end{code}
 
-Closed processes describe IO computations.
-
 \begin{code}
 run[] : ∀ {X} →  IOProc X → IO X
 run[] P = mapIO fst (run P [])
 \end{code}
-
-## [Examples](Session.Examples.html)

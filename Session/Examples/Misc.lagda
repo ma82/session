@@ -1,7 +1,5 @@
 [2013-2014 matteo.acerbi@gmail.com](https://www.gnu.org/licenses/gpl.html)
 
-# Simple examples
-
 \begin{code}
 module Session.Examples.Misc where
 \end{code}
@@ -10,8 +8,6 @@ module Session.Examples.Misc where
 open import Base
 open import Session
 \end{code}
-
-## Abstract examples
 
 \begin{code}
 module Basic (M : Set → Set)(η : ∀ {X} → X → M X)
@@ -26,8 +22,6 @@ module Basic (M : Set → Set)(η : ∀ {X} → X → M X)
   c : [] ∷ »» (A ⅋ B) [ M ⊢ ⊤ ]> [] ∷ »» B ∷ A
   c = receive Z| »= λ _ → ⇑ η _
 \end{code}
-
-## Basic communication
 
 \begin{code}
 module Ex1 (M : Set → Set)(η : ∀ {X} → X → M X) where
@@ -48,8 +42,6 @@ open import Data.String
 open Ex1 IO return
 \end{code}
 
-## Basic communication, with IO actions
-
 \begin{code}
 ex2 : IOProc _
 ex2 = new⊤
@@ -69,8 +61,6 @@ ex2 = new⊤
     » end Z|
     » ⇑ putStrLn « "Parent has finished" »
 \end{code}
-
-## Send and receive
 
 \begin{code}
 ex3 : IOProc ⊤
@@ -96,8 +86,6 @@ ex3 = ⇑ putStrLn « "Enter 0" »
     ⋯ ⇑ (putStrLn x >> putStrLn y >> putStrLn « "Exit 0" »)
     » end Z|
 \end{code}
-
-## Main program
 
 \begin{code}
 main : IO C.<>

@@ -1,29 +1,5 @@
 [2013-2014 matteo.acerbi@gmail.com](https://www.gnu.org/licenses/gpl.html)
 
-## Bank account
-
-Example from Brady and Hammond's "Correct-by-Construction Concurrency".
-
-Reference (unsafe) code:
-
-    moveMoney(sum, sender, receiver) {
-      lock(sender);
-      lock(receiver);
-      sendFunds = read(sender);
-      recvFunds = read(receiver);
-      if (sendFunds < sum) {
-        putStrLn("Insufficient funds");
-        return;
-      }
-      write(sender, sendFunds - sum);
-      write(receiver, recvFunds + sum);
-      unlock(receiver);
-      unlock(sender);
-    }
-
-Instead of defining safe locking protocols as in the paper, we simply
-model the memory locations as processes.
-
 \begin{code}
 module Session.Examples.BankAccount where
 
@@ -46,7 +22,7 @@ moveMoney sum = get (S> Z|) λ sendFunds →
   success sum sendFunds recvFunds = put (S> Z|) (> sendFunds) » end (S> Z|)
                                   » put     Z|  (> recvFunds) » end     Z| 
   respond : ℕ → ℕ → ℕ → _
-  respond sum  sendFunds recvFunds with compare sendFunds sum -- TODO ≤?
+  respond sum  sendFunds recvFunds with compare sendFunds sum
   respond ._   sendFunds recvFunds | less    ._ k = ⇑ putStrLn « "Insufficient funds" »
                                                   » put  (S> Z|) ε » end (S> Z|)
                                                   » put      Z|  ε » end     Z| 

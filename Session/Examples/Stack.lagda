@@ -1,10 +1,5 @@
 [2013-2014 matteo.acerbi@gmail.com](https://www.gnu.org/licenses/gpl.html)
 
-## Stack
-
-See Toninho, Caires, Pfenning "Higher-Order Processes, Functions, and
-Sessions: A Monadic Integration".
-
 \begin{code}
 module Session.Examples.Stack where
 \end{code}
@@ -13,10 +8,6 @@ module Session.Examples.Stack where
 open import Base
 open import Session
 \end{code}
-
-The original type was a ``μ``: processes that interact forever to
-build an infinite stack should be forbidden. We temporarily lift the
-restriction.
 
 \begin{code}
 module AlmostOriginal where
@@ -29,28 +20,11 @@ module AlmostOriginal where
                                ; dealloc →            `I (inl _)  }) _
 \end{code}
 
-We cannot implement `stack1` as in the paper, as a direct recursive
-definition is not possible.
-
--- \begin{code}
--- stack1 : ∀ {X} → List X → [] ∷ (»» Stack X) [IO ⊤ ]> []
--- stack1 xs = {!!}
--- \end{code}
-
-We can instead make explicit at the type level (as an index to `` `ν
-``) the arguments to the recursive calls.
-
-We also explicitly allow the user of the stack to carry through the
-computation data from a type `Y` of her/his/its choice.
-
 \begin{code}
 tryPop : {X : Set} → List X → List X
 tryPop []       = []
 tryPop (xs ∷ _) = xs
 \end{code}
-
-We rename `dealloc` to `stop` as we do not actually "deallocate" the
-list, in fact we return it.
 
 \begin{code}
 data Op : Set where {- reset -} push pop stop : Op
@@ -62,8 +36,6 @@ Stack is y ny =
                               ; pop  → `I (inr (tryPop xs , ny pop xs y))
                               ; stop → `I (inl xs)                        }}) (is , y)
 \end{code}
-
-The type looks complicated but the process is straightforward.
 
 \begin{code}
 open IO
@@ -77,8 +49,6 @@ stack xs y ny =
                                        ; stop → end Z|              }
 \end{code}
 
-Let's see a concrete example.
-
 \begin{code}
 open import Data.Nat
 open import Data.Bool using (Bool ; true ; false ; not)
@@ -91,9 +61,6 @@ even (suc n) = odd n
 odd  zero    = false
 odd  (suc n) = even n
 \end{code}
-
-A user of a stack of booleans which simply pushes `n` alternating
-booleans.
 
 \begin{code}
 stack-user : (xs : List Bool)(n : ℕ) → [] ∷ Stack xs n (λ _ _ → pred) ««
