@@ -638,7 +638,10 @@ get : ∀ {M Γ Δ}{I O A B : Set}{T : A → De I}{s}
 get i f = read i »= λ a → at (∈ud i) » f a
 \end{code}
 
-#### `new` channel with ⊤ as initial and final state
+#### `new` channel for ⊤-indexed sessions
+
+We often create channels for stateful sessions where both index sets
+are `⊤`: using `new⊤` helps inference.
 
 \begin{code}
 new⊤ : ∀ {Γ M F} → Γ [ M ⊢ ⊤ ]> Γ ∷ (ε , ⊤ , ⊤ , F)
