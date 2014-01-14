@@ -317,13 +317,13 @@ received channel.
 Send Receive : Ty
 Send Γ Δ = Σ (Entry × Side × Code) λ W →
            let L , s , %2 R = W in
-           Σ (                      L ∈ Γ      ) λ i →
-           Σ ((> s , %2 (L [ s ]⊗ R)) ∈ evict i)
-             (_≡_ Δ ∘ replace (> s , _ , _ , R))
+           Σ (                      L ∈ Γ   ) λ i →
+           Σ ((> s , %2 (L [ s ]⊗ R)) ∈ rm i)
+             (_≡_ Δ ∘ ud (> s , _ , _ , R))
 Receive Γ Δ = Σ (Side × _ × Code) λ W →
               let s , L , _ , _ , R = W in
               Σ ((> s , %2 (L [ s ]⅋ R)) ∈ Γ) λ i → 
-                Δ ≡ replace (> s , %2 R) i ∷ L
+                Δ ≡ ud (> s , %2 R) i ∷ L
 \end{code}
 
 Writing to and reading from channels changes the type accordingly,
@@ -334,11 +334,11 @@ Write Read : Ty
 Write Γ Δ = Σ (Σ Code λ { (I , J , T) → J × Side × Set }) λ W →
             let (I , J , T) , j , s , O = W in
             Σ ((> s , I , O , [ s ]Σ J T) ∈ Γ)
-              (_≡_ Δ ∘ replace (> s , %2 T))
+              (_≡_ Δ ∘ ud (> s , %2 T))
 Read Γ Δ = Σ (Code × Side × _) λ W →
            let (I , J , T) , s , O = W in
            Σ ((> s , I , O , [ s ]Π J T) ∈ Γ)
-             (_≡_ Δ ∘ replace (> s , %2 T))
+             (_≡_ Δ ∘ ud (> s , %2 T))
 \end{code}
 
 This functor "consumes" `` `^ `` from the session type: it "allows"
@@ -350,7 +350,7 @@ At : Ty
 At Γ Δ = Σ (Σ _ λ I → Σ _ λ O → Σ (O → De I) λ _ → O × Side) λ W →
          let I , O , T , o , s = W in
          Σ ((> s , %2 `^ T) ∈ Γ)
-            (_≡_ Δ ∘ replace (> s , %2 T o))
+            (_≡_ Δ ∘ ud (> s , %2 T o))
 \end{code}
 
 Session types have "identity" codes `` `I `` as leaves, so to end a
@@ -361,7 +361,7 @@ End : Ty
 End Γ Δ = Σ (Σ Set λ I → Set × I × Side) λ W →
           let I , O , i , s = W in
           Σ ((> s , (I , O , `I i)) ∈ Γ)
-            (_≡_ Δ ∘ evict)
+            (_≡_ Δ ∘ rm)
 \end{code}
 
 The following definitions are actual (strictly positive) indexed
@@ -390,8 +390,8 @@ Server : Ty → Ty
 Server F Γ Δ = Σ (Code × Side × _) λ W → let A , s , I , O = W in
                Σ ((> s , I , O , [ s ]¡ A) ∈ Γ) λ i →
                  All¿ Δ
-               × F (replace (> + , A) i) Δ
-               × Δ ≡ evict i
+               × F (ud (> + , A) i) Δ
+               × Δ ≡ rm i
 \end{code}
 
 The client is positioned on the `-` side of the channel.
@@ -404,7 +404,7 @@ to `F`.
 Client : (Set → Ty) → Set → Ty
 Client F X Γ Δ = Σ (Code × Side × _) λ W → let A , s , I , O = W in
                  Σ ((> s , I , O , [ s ]¿ A) ∈ Γ) λ i →
-                   F X (replace (> - , A) i) Δ
+                   F X (ud (> - , A) i) Δ
 \end{code}
 
 We are free to run clients as many times as we want (`Ctr`), or even
@@ -415,7 +415,7 @@ Wk Ctr : Ty
 Wk Γ Δ = Σ (Code × Side × _) λ W →
          let A , s , I , O = W in
          Σ ((> s , I , O , [ s ]¿ A) ∈ Γ)
-           (_≡_ Δ ∘ evict)
+           (_≡_ Δ ∘ rm)
 Ctr Γ Δ = Σ (Code × Side × _) λ W →
           let A , s , I , O = W in
           let τ = > s , I , O , [ s ]¿ A in
@@ -448,8 +448,8 @@ CoRec F X Γ Δ = Σ (Side × Σ _ λ I → Σ _ λ O → (O → De (I ⊎ O)) �
                 let s , I , O , T , o = W in 
                 Σ ((> s , %2 `ν T o) ∈ Γ) λ i →
                   ((o : O) →   Guarded (T o)
-                             × F (X ⊎ O) (replace (> s , %2 T o) i) Δ)
-                × Δ ≡ evict i
+                             × F (X ⊎ O) (ud (> s , %2 T o) i) Δ)
+                × Δ ≡ rm i
 \end{code}
 
 ### Small, *collapsed* functors
@@ -628,14 +628,14 @@ We added `` `^ `` (in Strictly Positive Families we would have used ``
 \begin{code}
 put : ∀ {M Γ}{I O A : Set}{T : A → De I}{s} →
       (i : (> s , I , O , [ s ]Σ A (`^ T)) ∈ Γ) →
-      (a : A) → Γ [ M ⊢ A ]> (replace (> s , %2 T a) (∈replace i))
-put i a = write i a »= λ _ → at (∈replace i)
+      (a : A) → Γ [ M ⊢ A ]> (ud (> s , %2 T a) (∈ud i))
+put i a = write i a »= λ _ → at (∈ud i)
 
 get : ∀ {M Γ Δ}{I O A B : Set}{T : A → De I}{s}
       (i : (> s , I , O , [ s ]Π A (`^ T)) ∈ Γ) →
-      (f : ∀ a → replace (> s , %2 T a) (∈replace i) [ M ⊢ B ]> Δ) →
+      (f : ∀ a → ud (> s , %2 T a) (∈ud i) [ M ⊢ B ]> Δ) →
       Γ [ M ⊢ B ]> Δ
-get i f = read i »= λ a → at (∈replace i) » f a
+get i f = read i »= λ a → at (∈ud i) » f a
 \end{code}
 
 ## Haskell evaluator
@@ -765,7 +765,7 @@ continuation from the burden of communicating along `i`.
 
 We could avoid many uses of `unsafeCoerce` in the following but we
 think it is more efficient to avoid calling functions like
-`all-replace` as in the commented-out code: they perform no operations
+`all-ud` as in the commented-out code: they perform no operations
 on the actual lists of *untyped* channels.
 
 The usages of `unsafeCoerce` which are more difficult justify are
@@ -775,9 +775,8 @@ those inside every call to `readUChan` and `writeUChan`.
 run (send       i j) cs = let chanToSend    = lookupUChan        i  cs in                 
                           let chanToWriteOn = lookupUChan (wk/ i j) cs in                 
                           writeUChan chanToWriteOn chanToSend >>
-                          return (tt , unsafeCoerce (all-evict i cs))
-                          -- return (tt , all-replace j (all-evict i cs)
-                          --                            chanToWriteOn)
+                          return (tt , unsafeCoerce (all-rm i cs))
+                       -- return (tt , all-ud j (all-rm i cs) chanToWriteOn)
 \end{code}
 
 `receive` receives a channel from channel `i` and allows/forces the
@@ -793,10 +792,10 @@ run (receive      i) cs = let chanToReadFrom = lookupUChan i cs in
 is received it spawns a new copy of the server along it.
 
 \begin{code}                                                                              
-run (accept   i a p) cs = forkIO server >> return (tt , all-evict i cs)                   
+run (accept   i a p) cs = forkIO server >> return (tt , all-rm i cs)                   
   where c = lookupUChan i cs                                            
         service : UChan → IO _                                          
-        service n = run p (all-replace i cs n) >> return ⟨⟩
+        service n = run p (all-ud i cs n) >> return ⟨⟩
         server : IO C.<>                                                
         server = readUChan c        >>= λ n →                           
                  forkIO (service n) >>                                  
@@ -810,14 +809,14 @@ becomes process `p`.
 \begin{code}
 run (connect    i p) cs = newChan                         >>= λ n →                       
                           writeUChan (lookupUChan i cs) n >>                              
-                          run p (all-replace i cs n)
+                          run p (all-ud i cs n)
 \end{code}
 
 `wont i` avoids starting the client/server interaction with the server
 which waits for channels on `i`.
                                                                                           
 \begin{code}
-run (wont         i) cs = return (tt , all-evict i cs)
+run (wont         i) cs = return (tt , all-rm i cs)
 \end{code}
 
 `twice i` duplicates the server which waits for channels on `i`.
@@ -845,7 +844,7 @@ run (read         i) cs = let c = lookupUChan i cs in
 `end i` terminates the (sub)session
                                                                                           
 \begin{code}                                                                              
-run (end/       i r) cs = return (r , all-evict i cs)                                     
+run (end/       i r) cs = return (r , all-rm i cs)                                     
 \end{code}
 
 `at/ i o` simply returns `o`.

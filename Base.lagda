@@ -127,12 +127,14 @@ pattern Z| = Z> <>
 open Membership-≡ public
 \end{code}
 
+`rm` for "remove"
+
 \begin{code}
 module _ {lA}{A : Set lA}{lP}{P : A → Set lP} where
 
-  evict : {xs : List A} → Any P xs → List A
-  evict (Z>_  {_}{xs} px) = xs
-  evict (S>_ {x}       i) = evict i ∷ x
+  rm : {xs : List A} → Any P xs → List A
+  rm (Z>_ {_}{xs} px) = xs
+  rm (S>_ {x}      i) = rm i ∷ x
 
   prefix : {xs : List A} → Any P xs → List A
   prefix (Z>_ {_}{xs} px) = []
@@ -143,14 +145,16 @@ module _ {lA}{A : Set lA}{lP}{P : A → Set lP} where
   suffix (S>_ {x}       i) = suffix i
 \end{code}
 
-\begin{code}
-  replace : {xs : List A} → A → Any P xs → List A
-  replace a (Z>_ {_}{xs} px) = xs          ∷ a
-  replace a (S>_ {x}      i) = replace a i ∷ x
+`ud` for "update"
 
-  ∈replace : {x : A}{xs : List A} → (i : Any P xs) → x ∈ replace x i
-  ∈replace (Z> px) = Z> <>
-  ∈replace (S>  i) = S> ∈replace i
+\begin{code}
+  ud : {xs : List A} → A → Any P xs → List A
+  ud a (Z>_ {_}{xs} px) = xs      ∷ a
+  ud a (S>_ {x}      i) = ud a i ∷ x
+
+  ∈ud : {x : A}{xs : List A} → (i : Any P xs) → x ∈ ud x i
+  ∈ud (Z> px) = Z> <>
+  ∈ud (S>  i) = S> ∈ud i
 \end{code}
 
 In `lookupAll`'s type `Any P xs` should read `Ix xs` (`= Any (λ _ → ⊤) xs`).
@@ -170,21 +174,21 @@ TODO Add lookup□ to Mod.Base
 TODO name?
 
 \begin{code}
-    wk/ : {xs : List A}(i : Any P xs) → Any Q (evict i) → Any Q xs
+    wk/ : {xs : List A}(i : Any P xs) → Any Q (rm i) → Any Q xs
     wk/ {xs ∷ x} (Z> _ ) (q   ) = S> q
     wk/          (S> i ) (Z> q) = Z> q
     wk/          (S> i ) (S> a) = S> wk/ i a
 \end{code}
 
 \begin{code}
-    all-evict : {xs : List A}(j : Any P xs) → All Q xs → All Q (evict j)
-    all-evict (Z> _) (qs ,̇ _) = qs
-    all-evict (S> j) (qs ,̇ q) = all-evict j qs ,̇ q
+    all-rm : {xs : List A}(j : Any P xs) → All Q xs → All Q (rm j)
+    all-rm (Z> _) (qs ,̇ _) = qs
+    all-rm (S> j) (qs ,̇ q) = all-rm j qs ,̇ q
 
-    all-replace : {xs : List A}{a : A}
-                  (j : Any P xs) → All Q xs → Q a → All Q (replace a j)
-    all-replace (Z> _) (qs ,̇ _) qa = qs ,̇ qa
-    all-replace (S> j) (qs ,̇ q) qa = all-replace j qs qa ,̇ q
+    all-ud : {xs : List A}{a : A}
+              (j : Any P xs) → All Q xs → Q a → All Q (ud a j)
+    all-ud (Z> _) (qs ,̇ _) qa = qs ,̇ qa
+    all-ud (S> j) (qs ,̇ q) qa = all-ud j qs qa ,̇ q
 \end{code}
 
 TODO rename, clean-up
