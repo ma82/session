@@ -154,13 +154,13 @@ New Γ Δ = Σ _ λ F → Δ ≡ Γ ∷ ε , F
 Send Receive : Ty
 Send Γ Δ = Σ (Entry × Side × Code) λ W →
            let L , s , %2 R = W in
-           Σ (                      L ∈ Γ      ) λ i →
-           Σ ((> s , %2 (L [ s ]⊗ R)) ∈ evict i)
-             (_≡_ Δ ∘ replace (> s , _ , _ , R))
+           Σ (                      L ∈ Γ   ) λ i →
+           Σ ((> s , %2 (L [ s ]⊗ R)) ∈ rm i)
+             (_≡_ Δ ∘ ud (> s , _ , _ , R))
 Receive Γ Δ = Σ (Side × _ × Code) λ W →
               let s , L , _ , _ , R = W in
               Σ ((> s , %2 (L [ s ]⅋ R)) ∈ Γ) λ i → 
-                Δ ≡ replace (> s , %2 R) i ∷ L
+                Δ ≡ ud (> s , %2 R) i ∷ L
 \end{code}
 
 \begin{code}
@@ -168,7 +168,7 @@ Wk Ctr : Ty
 Wk Γ Δ = Σ (Code × Side × _) λ W →
          let A , s , I , O = W in
          Σ ((> s , I , O , [ s ]¿ A) ∈ Γ)
-           (_≡_ Δ ∘ evict)
+           (_≡_ Δ ∘ rm)
 Ctr Γ Δ = Σ (Code × Side × _) λ W →
           let A , s , I , O = W in
           let τ = > s , I , O , [ s ]¿ A in
@@ -181,12 +181,12 @@ Write Read : Ty
 Write Γ Δ = Σ (Σ Code λ { (I , J , T) → J × Side × Set }) λ W →
             let (I , J , T) , j , s , O = W in
             Σ ((> s , I , O , [ s ]Σ J T) ∈ Γ)
-              (_≡_ Δ ∘ replace (> s , %2 T))
+              (_≡_ Δ ∘ ud (> s , %2 T))
 
 Read Γ Δ = Σ (Code × Side × _) λ W →
            let (I , J , T) , s , O = W in
            Σ ((> s , I , O , [ s ]Π J T) ∈ Γ)
-             (_≡_ Δ ∘ replace (> s , %2 T))
+             (_≡_ Δ ∘ ud (> s , %2 T))
 \end{code}
 
 \begin{code}
@@ -194,7 +194,7 @@ At : Ty
 At Γ Δ = Σ (Σ _ λ I → Σ _ λ O → Σ (O → I ▹ ⊤) λ _ → O × Side) λ W →
          let I , O , T , o , s = W in
          Σ ((> s , %2 `^ T) ∈ Γ)
-            (_≡_ Δ ∘ replace (> s , %2 T o))
+            (_≡_ Δ ∘ ud (> s , %2 T o))
 \end{code}
 
 \begin{code}
@@ -202,7 +202,7 @@ End : Ty
 End Γ Δ = Σ (Σ Set λ I → Set × I × Side) λ W →
           let I , O , i , s = W in
           Σ ((> s , (I , O , `I i)) ∈ Γ)
-            (_≡_ Δ ∘ evict)
+            (_≡_ Δ ∘ rm)
 \end{code}
 
 The forked process must do *all* `ΓR`, the next process must do `ΓL`.
@@ -223,8 +223,8 @@ Server : Ty → Ty
 Server F Γ Δ = Σ (Code × Side × _) λ W → let A , s , I , O = W in
                Σ ((> s , I , O , [ s ]¡ A) ∈ Γ) λ i →
                  All¿ Δ
-               × F (replace (> + , A) i) Δ
-               × Δ ≡ evict i
+               × F (ud (> + , A) i) Δ
+               × Δ ≡ rm i
 \end{code}
 
 By convention the client positions itself on the `-` side of the
@@ -234,7 +234,7 @@ channel.
 Client : (Set → Ty) → Set → Ty
 Client F X Γ Δ = Σ (Code × Side × _) λ W → let A , s , I , O = W in
                  Σ ((> s , I , O , [ s ]¿ A) ∈ Γ) λ i →
-                   F X (replace (> - , A) i) Δ
+                   F X (ud (> - , A) i) Δ
 \end{code}
 
 \begin{code}
@@ -256,8 +256,8 @@ CoRec F X Γ Δ = Σ (Side × Σ _ λ I → Σ _ λ O → (O → (I ⊎ O) ▹ �
                 let s , I , O , T , o = W in 
                 Σ ((> s , %2 `ν T o) ∈ Γ) λ i →
                   ((o : O) →   Guarded (T o)
-                             × F (X ⊎ O) (replace (> s , %2 T o) i) Δ)
-                × Δ ≡ evict i
+                             × F (X ⊎ O) (ud (> s , %2 T o) i) Δ)
+                × Δ ≡ rm i
 \end{code}
 
 ### Small functors
@@ -379,14 +379,14 @@ m » n = m »= λ _ → n
 \begin{code}
 put : ∀ {M Γ}{I O A : Set}{T : A → De I}{s} →
       (i : (> s , I , O , [ s ]Σ A (`^ T)) ∈ Γ) →
-      (a : A) → Γ [ M ⊢ A ]> (replace (> s , %2 T a) (∈replace i))
-put i a = write i a »= λ _ → at (∈replace i)
+      (a : A) → Γ [ M ⊢ A ]> (ud (> s , %2 T a) (∈ud i))
+put i a = write i a »= λ _ → at (∈ud i)
 
 get : ∀ {M Γ Δ}{I O A B : Set}{T : A → De I}{s}
       (i : (> s , I , O , [ s ]Π A (`^ T)) ∈ Γ) →
-      (f : ∀ a → replace (> s , %2 T a) (∈replace i) [ M ⊢ B ]> Δ) →
+      (f : ∀ a → ud (> s , %2 T a) (∈ud i) [ M ⊢ B ]> Δ) →
       Γ [ M ⊢ B ]> Δ
-get i f = read i »= λ a → at (∈replace i) » f a
+get i f = read i »= λ a → at (∈ud i) » f a
 \end{code}
 
 ## Haskell evaluator
@@ -486,8 +486,8 @@ run (fork       d x) cs = let ls , rs = all-splits cs d in
 run (send       i j) cs = let chanToSend    = lookupUChan        i  cs in                 
                           let chanToWriteOn = lookupUChan (wk/ i j) cs in                 
                           writeUChan chanToWriteOn chanToSend >>
-                          return (tt , unsafeCoerce (all-evict i cs))
-                          -- return (tt , all-replace j (all-evict i cs)                     
+                          return (tt , unsafeCoerce (all-rm i cs))
+                          -- return (tt , all-ud j (all-rm i cs)                     
                           --                            chanToWriteOn)                       
                                                                                           
 run (receive      i) cs = let chanToReadFrom = lookupUChan i cs in                        
@@ -496,10 +496,10 @@ run (receive      i) cs = let chanToReadFrom = lookupUChan i cs in
 \end{code}                                                                                
                                                                                           
 \begin{code}                                                                              
-run (accept i   a p) cs = forkIO server >> return (tt , all-evict i cs)                   
+run (accept i   a p) cs = forkIO server >> return (tt , all-rm i cs)                   
   where c = lookupUChan i cs                                            
         service : UChan → IO _                                          
-        service n = run p (all-replace i cs n) >> return ⟨⟩
+        service n = run p (all-ud i cs n) >> return ⟨⟩
         server : IO C.<>                                                
         server = readUChan c        >>= λ n →                           
                  forkIO (service n) >>                                  
@@ -507,9 +507,9 @@ run (accept i   a p) cs = forkIO server >> return (tt , all-evict i cs)
                                                                                           
 run (connect    i p) cs = newChan                         >>= λ n →                       
                           writeUChan (lookupUChan i cs) n >>                              
-                          run p (all-replace i cs n)
+                          run p (all-ud i cs n)
                                                                                           
-run (wont         i) cs = return (tt , all-evict i cs)                                    
+run (wont         i) cs = return (tt , all-rm i cs)                                    
                                                                                           
 run (twice        i) cs = return (tt , (cs ,̇ lookupUChan i cs))                           
 \end{code}                                                                                
@@ -525,7 +525,7 @@ run (read         i) cs = let c = lookupUChan i cs in
 \end{code}                                                                                
                                                                                           
 \begin{code}                                                                              
-run (end/       i r) cs = return (r , all-evict i cs)                                     
+run (end/       i r) cs = return (r , all-rm i cs)                                     
                                                                                           
 run (at/        i o) cs = return (o , unsafeCoerce cs)                                    
 \end{code}
