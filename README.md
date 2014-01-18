@@ -1,4 +1,4 @@
-# Linear dependent session types in Agda
+# Linear dependent session types in Agda?
 
 ## No Warranty
 
