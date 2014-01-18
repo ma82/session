@@ -17,18 +17,6 @@ made **many** changes to the rules in order to obtain the programming
 interface I wanted. I will add many comments and explanations when I
 have more time.
 
-## Documentation
-
-    make html
-    
-**Warning** The above should work in any system, however I use that
-command with a (too buggy to share) patch to Agda that translates the
-Markdown paragraphs to HTML using `pandoc`.
-
-I guess the same can be done more properly using `PandocAgda` from
-Hackage (which I never tried), but you might need to change the
-command.
-
 ## Agda version
 
 I am using the development version of Agda
@@ -71,6 +59,18 @@ After a (possibly long) while some binaries should appear in
 In the unlikely case that they run, please check if the output
 corresponds to that in the provided `.out` files. Note that examples
 can be non-deterministic, though.
+
+## Documentation
+
+    make html
+    
+**Warning** The above should work in any system, however I use that
+command with a (too buggy to share) patch to Agda that translates the
+Markdown paragraphs to HTML using `pandoc`.
+
+I guess the same can be done more properly using `PandocAgda` from
+Hackage (which I never tried), but you might need to change the
+command.
 
 ## [License](https://www.gnu.org/licenses/gpl.html)
 
