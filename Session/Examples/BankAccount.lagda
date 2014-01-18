@@ -74,8 +74,8 @@ test = l <- new
      » moveMoney 8
   where open import Data.Nat.Show
         log : _ → ℕ → IO ⊤
-        log xs n = putStr   « xs     » >>= λ _ →
-                   putStrLn « show n » >>= λ _ →
+        log xs n = putStr   « xs     » >>
+                   putStrLn « show n » >>
                    return _
 \end{code}
 
