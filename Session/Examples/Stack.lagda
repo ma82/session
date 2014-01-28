@@ -5,7 +5,6 @@ module Session.Examples.Stack where
 \end{code}
 
 \begin{code}
-open import Base
 open import Session
 \end{code}
 

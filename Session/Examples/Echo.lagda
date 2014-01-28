@@ -3,7 +3,6 @@
 \begin{code}
 module Session.Examples.Echo where
 
-open import Base
 open import Session
 \end{code}
 

@@ -3,7 +3,7 @@
 \begin{code}
 module Session where
 
-open import Base
+open import Session.Base public
 \end{code}
 
 \begin{code}

@@ -1,7 +1,9 @@
+[2013-2014 matteo.acerbi@gmail.com](https://www.gnu.org/licenses/gpl.html)
+
 TODO Merge with AD
 
 \begin{code}
-module Base where
+module Session.Base where
 \end{code}
 
 \begin{code}
