@@ -27,7 +27,6 @@ model the memory locations as processes.
 \begin{code}
 module Session.Examples.BankAccount where
 
-open import Base
 open import Session
 open import Data.Nat as ℕ
 open import IO.Primitive
