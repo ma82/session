@@ -3,7 +3,7 @@
 # Linear dependent session types [WIP]
 
 What follows is an incomplete draft: do not read this unless given
-explicit permission by the author. :-)
+explicit permission by the author.
 
 ## Introduction
 
@@ -452,48 +452,6 @@ CoRec F X Γ Δ = Σ (Side × Σ _ λ I → Σ _ λ O → (O → De (I ⊎ O)) �
                 × Δ ≡ rm i
 \end{code}
 
-### Small, *collapsed* functors
-
-\begin{code}
-private [Ty] = Cx → Cx → Set
-\end{code}
-
-We might want to switch to *small* functors (compare `[Ty]` and `Ty`),
-also avoiding us to require witnesses which are actually *forced* (see
-Edwin Brady et al's "Inductive Families Need Not Store Their
-Indices").
-
-Here are a couple examples of how we plan to proceed.
-
-\begin{code}
-module Small where
-
-  [New] : Ty
-  [New] Γ (Δ ∷ ε , F) = Γ ≡ Δ
-  [New] _ _           = ⊥
-
-  open import AD.Ix ; open Ix Level.zero
-
-  isI? : {Γ : Cx} → Ix Γ → 1+ (Σ Set id)
-  isI? i with lookup i
-  ... | %3 (`I j) = > (% j)
-  ... | _         = ε
-
-  [End] : Ty
-  [End] Γ Δ = Σ (Σ Set λ I → Set × I × Side) λ W →
-              let I , O , i , s = W in
-              Σ (Ix Γ) λ i →
-                case isI? i of 1+.maybe (λ _ → Δ ≡ Ix.− _ i) ⊥
-\end{code}
-
-While it seems possible to treat all the syntax in this way, we prefer
-to use the large version for now as we think it leads to better type
-errors when constructing programs.
-
-We will investigate the possibility of using the large version as
-syntax for the small one, by executing the translation at compile
-time.
-
 ### Tags
 
 We adopt a "tagful" syntax, where nodes of the syntax tree are made of
@@ -889,16 +847,3 @@ For simplicity, the currently provided
 [examples](Session.Examples.html) just use `IO` for basic operations
 like suspending processes for finite amounts of time or accessing the
 standard output.
-
-## Conclusion and further work
-
-## Acknowledgments
-
-I must thank
-
-- Claudio Sacerdoti Coen, who provided many useful comments on a
-  previous version of this implementation;
-
-- Peter Morris, who originally taught me the above technique to
-  attempt to make families small by computation.
-
