@@ -238,28 +238,28 @@ CoRec F X Γ Δ = Σ (Side × Σ _ λ I → Σ _ λ O → (O → (I ⊎ O) ▹ �
                 × Δ ≡ rm i
 \end{code}
 
-\begin{code}
-module Small where
+-- \begin{code}
+-- module Small where
 
-  private [Ty] = Cx → Cx → Set
+--   private [Ty] = Cx → Cx → Set
 
-  [New] : Ty
-  [New] Γ (Δ ∷ ε , F) = Γ ≡ Δ
-  [New] _ _           = ⊥
+--   import AD
 
-  open import AD.Ix ; open Ix Level.zero
+--   [New] : [Ty]
+--   [New] Γ (Δ ∷ ε , F) = Γ AD.≡ Δ
+--   [New] _ _           = ⊥
 
-  isI? : {Γ : Cx} → Ix Γ → 1+ (Σ Set id)
-  isI? i with lookup i
-  ... | %3 (`I j) = > (% j)
-  ... | _         = ε
+--   open AD.Ix Level.zero
 
-  [End] : Ty
-  [End] Γ Δ = Σ (Σ Set λ I → Set × I × Side) λ W →
-              let I , O , i , s = W in
-              Σ (Ix Γ) λ i →
-                case isI? i of 1+.maybe (λ _ → Δ ≡ Ix.− _ i) ⊥
-\end{code}
+--   isI? : {Γ : Cx} → Ix Γ → 1+ (Σ Set id)
+--   isI? i with lookup i
+--   ... | %3 (`I j) = > (% j)
+--   ... | _         = ε
+
+--   [End] : [Ty]
+--   [End] Γ Δ = Σ (Ix Γ) λ i →
+--                 case isI? i of 1+.maybe (λ _ → Δ AD.≡ AD.Ix.− _ i) ⊥
+-- \end{code}
 
 \begin{code}
 module T where
