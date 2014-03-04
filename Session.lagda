@@ -2,16 +2,13 @@
 
 # Linear dependent session types [WIP]
 
-What follows is an incomplete draft: do not read this unless given
-explicit permission by the author.
-
 ## Introduction
 
 This document describes and contains an Agda implementation of an
 embedded concurrent language with linear dependent session types.
 
 The reader must be warned that in this work we are using Agda *only*
-to try and mimic features typical of a session typed process calculi
+to try and mimic features typical of a session typed process calculus
 with a by-construction well-typed representation: we are in no way in
 the position to prove any correspondence with a logical system.
 
