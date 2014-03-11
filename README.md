@@ -1,21 +1,10 @@
-# Linear dependent session types in Agda?
+# Dependent sessions in Agda
 
 ## No Warranty
 
 I started working at this project circa July 2013. Nonetheless, this
 is very experimental work-in-progress code, no correctness proof is
 provided and it might not work as expected.
-
-## No Logic
-
-While the main original inspiration was Philip Wadler's "Propositions
-as sessions", the use of the word *linear* in the title does not mean
-I devised a syntax for a version of Linear Logic.
-
-Apart from replacing polymorphism with dependent quantification, I
-made **many** changes to the rules in order to obtain the programming
-interface I wanted. I will add many comments and explanations when I
-have more time.
 
 ## Agda version
 
