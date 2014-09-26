@@ -40,7 +40,8 @@ module Ex1 (M : Set → Set)(η : ∀ {X} → X → M X) where
 \end{code}
 
 \begin{code}
-open IO ; open C ; open CS
+open IO
+open import Control.Concurrent
 open import Unit as U
 open import Data.String
 
@@ -99,7 +100,7 @@ ex3 = ⇑ putStrLn « "Enter 0" »
 ## Main program
 
 \begin{code}
-main : IO C.<>
+main : IO U.<>
 main = putStrLn « "*** Ex 1 ***" » >>
        run ex1 []                  >>
        putStrLn « "*** Ex 2 ***" » >>

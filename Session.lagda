@@ -1,11 +1,11 @@
 [2013-2014 Matteo Acerbi](https://www.gnu.org/licenses/gpl.html)
 
-# Linear dependent session types [WIP]
+# Dependent sessions in Agda [WIP]
 
 ## Introduction
 
 This document describes and contains an Agda implementation of an
-embedded concurrent language with linear dependent session types.
+embedded concurrent language with dependent session types.
 
 The reader must be warned that in this work we are using Agda *only*
 to try and mimic features typical of a session typed process calculus
@@ -633,10 +633,8 @@ _[IO_]>_ = λ Γ X Δ → Γ [ IO ⊢ X ]> Δ
 
 IOProc = λ X → [] [IO X ]> []
 
-open import Control.Concurrent
-module C  = Control.Concurrent
+open import Control.Concurrent as C
 open import Control.Concurrent.Chan.Synchronous
-module CS = Control.Concurrent.Chan.Synchronous
 \end{code}
 
 We need our channels to be untyped, to obtain which we postulate an
