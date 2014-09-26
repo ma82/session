@@ -7,6 +7,7 @@ open import Session
 \end{code}
 
 \begin{code}
+open import Control.Concurrent as C
 open IO
 open import Data.String
 \end{code}
@@ -19,7 +20,7 @@ Ty = ⊤ , ⊤ , `Π^ String λ x → `Σ (Σ String (_≡_ x)) (`I _)
 \begin{code}
 server : [] ∷ (> + , ⊤ , ⊤ , ¡ Ty) [IO ⊤ ]> []
 server = accept Z| [] (get Z| λ x → ⇑ putStrLn « "Server received " ++ x »
-                                  » write Z| (x , <>)
+                                  » write Z| (x , Session.<>)
                                   » ⇑ putStrLn « "Server sent "     ++ x »
                                   » end Z|)
 \end{code}

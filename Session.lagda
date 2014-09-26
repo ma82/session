@@ -1,5 +1,3 @@
-[2013-2014 Matteo Acerbi](https://www.gnu.org/licenses/gpl.html)
-
 \begin{code}
 module Session where
 
@@ -360,10 +358,8 @@ _[IO_]>_ = λ Γ X Δ → Γ [ IO ⊢ X ]> Δ
 
 IOProc = λ X → [] [IO X ]> []
 
-open import Control.Concurrent
-module C  = Control.Concurrent
+open import Control.Concurrent as C
 open import Control.Concurrent.Chan.Synchronous
-module CS = Control.Concurrent.Chan.Synchronous
 \end{code}
 
 \begin{code}

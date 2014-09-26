@@ -49,6 +49,7 @@ stack xs y ny =
 \end{code}
 
 \begin{code}
+open import Control.Concurrent as C
 open import Data.Nat
 open import Data.Bool using (Bool ; true ; false ; not)
 open import Relation.Nullary
@@ -80,6 +81,6 @@ main = run test [] >> C.threadDelay C.onesec where
        » fork ([] ,̇ +-) (stack-user [] 42 » ⇑ return tt)
        » xs <- stack [] _ _
        ⋯ L.foldl (λ m b → ⇑ putStrLn « show b » » m)
-                 (⇑ return tt)
+                 (⇑ return true)
                  xs
 \end{code}

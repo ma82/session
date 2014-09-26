@@ -3,6 +3,7 @@
 \begin{code}
 module Session.Examples.BankAccount where
 
+open import Control.Concurrent as C
 open import Session
 open import Data.Nat as ℕ
 open import IO.Primitive
