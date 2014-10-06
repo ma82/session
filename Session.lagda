@@ -213,8 +213,8 @@ Split (> _ , x) = Side
 Split (ε   , x) = SplitNew
 
 split : (τ : 1+ Side × Code) → Split τ → Cx × Cx → Cx × Cx
-split (> s , C)  + (L , R) = (L ∷ (> + , C)) ,  R
-split (> s , C)  - (L , R) =  L              , (R ∷ (> + , C))
+split (> s , C)  + (L , R) = (L ∷ (> s , C)) ,  R
+split (> s , C)  - (L , R) =  L              , (R ∷ (> s , C))
 split (ε   , C)  + (L , R) = (L ∷ (ε   , C)) ,  R
 split (ε   , C)  - (L , R) =  L              , (R ∷ (ε   , C))
 split (ε   , C) +- (L , R) = (L ∷ (> + , C)) , (R ∷ (> - , C))
@@ -576,9 +576,8 @@ m » n = m »= λ _ → n
 
 #### `write` and `read` dependently
 
-We added `` `^ `` (in Strictly Positive Families we would have used ``
-`Δ ``) to recover the *possibility* of making use of data exchanged by
-`write` and `read` at the type level.
+We added `` `^ `` to recover the *possibility* of making use of data
+exchanged by `write` and `read` at the type level.
 
 \begin{code}
 put : ∀ {M Γ}{I O A : Set}{T : A → De I}{s} →
