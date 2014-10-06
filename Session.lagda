@@ -75,8 +75,8 @@ Split (> _ , x) = Side
 Split (ε   , x) = SplitNew
 
 split : (τ : 1+ Side × Code) → Split τ → Cx × Cx → Cx × Cx
-split (> s , C)  + (L , R) = (L ∷ (> + , C)) ,  R
-split (> s , C)  - (L , R) =  L              , (R ∷ (> + , C))
+split (> s , C)  + (L , R) = (L ∷ (> s , C)) ,  R
+split (> s , C)  - (L , R) =  L              , (R ∷ (> s , C))
 split (ε   , C)  + (L , R) = (L ∷ (ε   , C)) ,  R
 split (ε   , C)  - (L , R) =  L              , (R ∷ (ε   , C))
 split (ε   , C) +- (L , R) = (L ∷ (> + , C)) , (R ∷ (> - , C))
