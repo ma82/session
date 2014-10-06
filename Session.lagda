@@ -712,7 +712,7 @@ run (m »= f        ) cs = run m cs >>= λ { (x , cs) → run (f x) cs }
 run (new           ) cs = newChan >>= λ c → return (_ , (cs ,̇ c))
 \end{code}
 
-`forks x` interprets the `Splits` in `s` obtaining two lists of
+`fork x` interprets the `Splits` in `s` obtaining two lists of
 channels `ls` and `rs`: it keeps `ls` for the parent thread and leaves
 access to `rs` to the child (`x`).
                                                                                           
@@ -730,7 +730,7 @@ think it is more efficient to avoid calling functions like
 `all-ud` as in the commented-out code: they perform no operations
 on the actual lists of *untyped* channels.
 
-The usages of `unsafeCoerce` which are more difficult justify are
+The usages of `unsafeCoerce` which are more difficult to justify are
 those inside every call to `readUChan` and `writeUChan`.
 
 \begin{code}                                                                              
@@ -741,7 +741,7 @@ run (send       i j) cs = let chanToSend    = lookupUChan        i  cs in
                        -- return (tt , all-ud j (all-rm i cs) chanToWriteOn)
 \end{code}
 
-`receive` receives a channel from channel `i` and allows/forces the
+`receive i` receives a channel from channel `i` and allows/forces the
 continuation to also take care of it.
                                                                                           
 \begin{code}
@@ -751,7 +751,7 @@ run (receive      i) cs = let chanToReadFrom = lookupUChan i cs in
 \end{code}
 
 `accept i a p` forks a process that waits for channels: whenever one
-is received it spawns a new copy of the server along it.
+is received it spawns a new copy of the server `p` along it.
 
 \begin{code}                                                                              
 run (accept   i a p) cs = forkIO server >> return (tt , all-rm i cs)                   
@@ -764,8 +764,8 @@ run (accept   i a p) cs = forkIO server >> return (tt , all-rm i cs)
                  server                                                 
 \end{code}
 
-`connect i p` creates a channel and sends it along the channel `i`,
-which is (or should be) shared by construction with a server, then it
+`connect i p` creates a channel and sends it along channel `i`, which
+is (or should be) shared by construction with a server, then it
 becomes process `p`.
                                                                                           
 \begin{code}

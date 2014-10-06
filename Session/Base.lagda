@@ -90,7 +90,7 @@ module □List = Data.List.All
 \end{code}
 
 TODO Avoid this horror by defining All via Σ by recursion.
-     (You have one in Mod.Base)
+     (You have one in AD)
 
 \begin{code}
 infixl 4 _,̇_ -- press comma and then slash dot

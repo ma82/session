@@ -1,4 +1,4 @@
-[2013-2014 matteo.acerbi@gmail.com](https://www.gnu.org/licenses/gpl.html)
+[2013-2014 Matteo Acerbi](https://www.gnu.org/licenses/gpl.html)
 
 \begin{code}
 module Session.Examples.Echo where
