@@ -2,40 +2,6 @@
 
 # Dependent sessions in Agda [WIP]
 
-## Introduction
-
-This document describes and contains an Agda implementation of an
-embedded concurrent language with dependent session types.
-
-The reader must be warned that in this work we are using Agda *only*
-to try and mimic features typical of a session typed process calculus
-with a by-construction well-typed representation: we are in no way in
-the position to prove any correspondence with a logical system.
-
-We nonetheless adopt notations and ideas from more theoretical works
-in the fields of process algebras and linear logic, in particular from
-Philip Wadler's "Propositions as Sessions" paper (for the main type
-and terms constructs), and from the recent line of work by Caires,
-Pfenning and Toninho (on monadic syntax, corecursion and dependent
-types).
-
-The immediate goal of this development is not to formalise a typed
-process calculus, but to allow Agda users to experiment with an
-*embedded* concurrency-oriented DSL: before attempting to prove the
-properties of the system or even of specific processes, we aim at
-designing a programmer-friendly interface.
-
-We provide an evaluation function making use of the Haskell FFI: it is
-therefore possible to compile and execute programs in the DSL as
-Haskell process (see the [README](http://github.com/ma82/session/) for
-instructions on how to attempt compilation). Note that in order to
-obtain the evaluator (see the end of this file) we had to (locally)
-disable totality checking and to use `unsafeCoerce` in several places.
-
-We are currently studying how to define a total non-deterministic
-reference semantics which will allow formalised reasoning concerning
-the concurrent execution of processes.
-
 \begin{code}
 module Session where
 
