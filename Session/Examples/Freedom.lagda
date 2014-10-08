@@ -28,11 +28,11 @@ module M (M : Set → Set)(η : ∀ {X} → X → M X)(A : Set) where
   CA = S ; BC = S ; AB = S
 
   abC : [] ∷ CA ∷ BC ∷ AB [ M ⊢ A ]> []
-  abC = -- (forked) process A reads from CA and sends on AB
+  abC = -- fork process A which reads from CA and writes on AB
         fork ([] ,̇ -+ ,̇ + ,̇ +-) (p (Z|   ) Z| » ⇑ η tt)
-        -- (forked) process B reads from AB and sends on BC
+        -- fork process B which reads from AB and writes on BC
       » fork ([] ,̇ +  ,̇ +- ,̇ -) (p (S> Z|) Z| » ⇑ η tt)
-        -- (forked) process C reads from BC and sends on AC
+        -- become process C which reads from BC and writes on AC
       » p (S> Z|) Z|
 
   test : [] [ M ⊢ A ]> []
