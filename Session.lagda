@@ -162,6 +162,7 @@ Ctr Γ Δ = Σ (Code × Side × _) λ W →
 
 \begin{code}
 Write Read : Ty
+
 Write Γ Δ = Σ (Σ Code λ { (I , J , T) → J × Side × Set }) λ W →
             let (I , J , T) , j , s , O = W in
             Σ ((> s , I , O , [ s ]Σ J T) ∈ Γ)
@@ -348,7 +349,7 @@ private
 \end{code}
 
 \begin{code}
-open import IO.Primitive using (IO ; return ; _>>=_ ; putStr ; putStrLn)
+open import IO.Primitive using (IO ; return ; _>>=_)
 module IO = IO.Primitive
 \end{code}
 
@@ -397,7 +398,7 @@ readUChan {A = A} c = readChan c >>= return ∘ unsafeCoerce
 \end{code}
 
 \begin{code}
-{-# NO_TERMINATION_CHECK #-}
+{-# NON_TERMINATING #-}
 run : {Γ Δ : Cx}{X : Set} → Γ [IO X ]> Δ → ⟦ Γ ⟧Cx → IO (X × ⟦ Δ ⟧Cx)
 \end{code}
 
@@ -470,6 +471,6 @@ run (corec   i o gp) cs = aux o
 \end{code}
 
 \begin{code}
-run[] : ∀ {X} →  IOProc X → IO X
+run[] : ∀ {X} → IOProc X → IO X
 run[] P = mapIO fst (run P [])
 \end{code}

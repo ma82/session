@@ -38,7 +38,7 @@ module M (M : Set → Set)(η : ∀ {X} → X → M X)(A : Set) where
 \end{code}
 
 \begin{code}
-open import IO.Primitive
+open IO
 open import Unit as U
 
 open M IO return ⊥ -- !!!
