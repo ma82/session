@@ -1,24 +1,20 @@
-# Dependent sessions in Agda
+# Session
 
-## No Warranty
+## Dependencies
 
-I started working at this project circa July 2013. Nonetheless, this
-is very experimental work-in-progress code, no correctness proof is
-provided and it might not work as expected.
-
-## Agda version
+### Agda
 
 I am using the development version of Agda
 
-    darcs get --lazy http://code.haskell.org/Agda
-   
+    git clone https://github.com/agda/agda.git
+
 Please let me know if some changes in Agda break compilation.
 
-## Agda dependencies
+### Agda libraries
 
 If you do not have it already, you need Agda's standard library:
 
-    darcs get --lazy http://www.cse.chalmers.se/~nad/repos/lib/
+    git clone https://github.com/agda/agda-stdlib.git
 
 A couple other repositories are also required.
 
@@ -34,7 +30,7 @@ Do not forget to install `concurrent-agda`'s Haskell package.
 
     cd concurrent-agda/ffi
     cabal install
-    
+
 If everything worked, please check that the paths in `session`'s
 `Makefile` are correct, otherwise edit them.
 
@@ -42,31 +38,24 @@ If everything worked, please check that the paths in `session`'s
 
     make examples
 
-After a (possibly long) while some binaries should appear in
-`Session/Examples/`.
+After a while some binaries should appear in `Session/Examples/`.
 
-In the unlikely case that they run, please check if the output
-corresponds to that in the provided `.out` files. Note that examples
-can be non-deterministic, though.
+Please check that the output corresponds to that in the provided
+`.out` files. Note that examples can be non-deterministic, though, so
+some lines may appear in different order.
 
 ## Documentation
 
     make html
-    
-**Warning** The above should work in any system, however I use that
-command with a (too buggy to share) patch to Agda that translates the
-Markdown paragraphs to HTML using `pandoc`.
 
-I guess the same can be done more properly using `PandocAgda` from
-Hackage (which I never tried), but you might need to change the
-command.
+Or visit [this page](http://acerbi.works/html/Session.html).
 
 ## [License](https://www.gnu.org/licenses/gpl.html)
 
 ## Contacts
 
 - [Mail](mailto:matteo.acerbi@gmail.com)
-- [Site](http://ma82.github.io/)
+- [Site](http://acerbi.works/html/Session.html)
 
 ## Participate!
 
