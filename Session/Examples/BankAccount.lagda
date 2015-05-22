@@ -23,9 +23,9 @@ moveMoney sum = get (S> Z|) λ sendFunds →
                                   » put     Z|  (> recvFunds) » end     Z| 
   respond : ℕ → ℕ → ℕ → _
   respond sum  sendFunds recvFunds with compare sendFunds sum
-  respond ._   sendFunds recvFunds | less    ._ k = ⇑ putStrLn « "Insufficient funds" »
-                                                  » put  (S> Z|) ε » end (S> Z|)
-                                                  » put      Z|  ε » end     Z| 
+  respond ._   sendFunds recvFunds | less    ._ k =   ⇑ putStrLn « "Insufficient funds" »
+                                                    » put  (S> Z|) ε » end (S> Z|)
+                                                    » put      Z|  ε » end     Z|
   respond sum  ._        recvFunds | equal   ._   = success sum      0  (sum ℕ.+ recvFunds)
   respond sum  ._        recvFunds | greater ._ k = success sum (suc k) (sum ℕ.+ recvFunds)
 \end{code}
@@ -35,8 +35,8 @@ fund : (init : ℕ) → [] ∷ ((De ⊤ ∋ `Π^ ℕ  λ _ → `Σ^ (1+ ℕ) λ 
                     [IO ℕ ]>
                     []
 fund init = put Z| init
-          » get Z| (1+.maybe (λ n → end Z| » ⇑ return n   )
-                             (      end Z| » ⇑ return init))
+          » get Z| (1+.maybe (λ n → end Z| » (⇑ return n)    )
+                             (      end Z| » (⇑ return init)))
 \end{code}
 
 \begin{code}

@@ -5,7 +5,10 @@ open import Session.Base public
 \end{code}
 
 \begin{code}
-mutual 
+infix 4 _⊗_ _⅋_
+infix 7 ¡_ ¿_
+
+mutual
 
   De    = λ I → I ▹ ⊤
   Code  = Σ _ λ I → Σ _ λ O → I ▹ O
@@ -30,24 +33,41 @@ O ◂ I = I ▹ O
 \end{code}
 
 \begin{code}
+infix 6 [_]Σ [_]Σ [_]Σ [_]Σ _[_]⊗_ _[_]⅋_ [_]¡_ [_]¿_
+
 [_]Σ   [_]Π   : Side  → {I O : Set}(S : Set)(T : I ▹ S)    → I ▹ O
 [_]Σ^  [_]Π^  : Side  → {I O : Set}(S : Set)(T : S → De I) → I ▹ O
 _[_]⊗_ _[_]⅋_ : Entry → Side → {I O : Set} → I ▹ O         → I ▹ O
 [_]¡_  [_]¿_  : Side  → Code  → {I O : Set}                → I ▹ O
 [ + ]Σ     = `Σ
 [ - ]Σ     = `Π
-[ + ]Π     = `Π 
-[ - ]Π     = `Σ 
+[ + ]Π     = `Π
+[ - ]Π     = `Σ
 [ s ]Σ^ S T = [ s ]Σ S (`^ T)
 [ s ]Π^ S T = [ s ]Π S (`^ T)
 L [ + ]⊗ R = L ⊗ R
 L [ - ]⊗ R = L ⅋ R
 L [ + ]⅋ R = L ⅋ R
 L [ - ]⅋ R = L ⊗ R
-[ + ]¡ F   = ¡ F    
-[ - ]¡ F   = ¿ F    
-[ + ]¿ F   = ¿ F     
+[ + ]¡ F   = ¡ F
+[ - ]¡ F   = ¿ F
+[ + ]¿ F   = ¿ F
 [ - ]¿ F   = ¡ F
+\end{code}
+
+\begin{code}
+infixr 6 %_ %2_ %3_ %4_
+
+pattern %_  x = _ , x
+pattern %2_ x = % %  x
+pattern %3_ x = % %2 x
+pattern %4_ x = % %3 x
+
+infixr 6 »»_
+infixl 6 _««
+
+pattern »»_ x = > + , %2 x
+pattern _«« x = > - , %2 x
 \end{code}
 
 \begin{code}
@@ -56,9 +76,9 @@ Cx = List Entry
 
 \begin{code}
 is¿ : Entry → Set
-is¿ (> + , (_ , _ , ¿ F)) = ⊤
-is¿ (> - , (_ , _ , ¡ F)) = ⊤
-is¿  _                    = ⊥
+is¿ (> + , %2 ¿ F) = ⊤
+is¿ (> - , %2 ¡ F) = ⊤
+is¿  _             = ⊥
 \end{code}
 
 \begin{code}
@@ -67,14 +87,14 @@ All¿ = All is¿
 \end{code}
 
 \begin{code}
-data SplitNew : Set where 
+data SplitNew : Set where
   + - +- -+ : SplitNew
 
-Split : 1+ Side × Code → Set
+Split : Entry → Set
 Split (> _ , x) = Side
 Split (ε   , x) = SplitNew
 
-split : (τ : 1+ Side × Code) → Split τ → Cx × Cx → Cx × Cx
+split : (τ : Entry) → Split τ → Cx × Cx → Cx × Cx
 split (> s , C)  + (L , R) = (L ∷ (> s , C)) ,  R
 split (> s , C)  - (L , R) =  L              , (R ∷ (> s , C))
 split (ε   , C)  + (L , R) = (L ∷ (ε   , C)) ,  R
@@ -95,7 +115,7 @@ splits (ds ,̇ s) = split _ s (splits ds)
 \begin{code}
 all-splits : ∀ {lP}{P : Code → Set lP}{Γ} →
                      All (P ∘ snd) Γ →
-                (d : Splits Γ)       → 
+                (d : Splits Γ)       →
                      All (P ∘ snd) (fst (splits d))
                    × All (P ∘ snd) (snd (splits d))
 
@@ -105,24 +125,14 @@ all-splits {Γ = Γ ∷ (ε   , C)} (ps ,̇ p) (ds ,̇    +) =
   Σ.map (flip _,̇_ p)  id          (all-splits ps ds)
 all-splits {Γ = Γ ∷ (ε   , C)} (ps ,̇ p) (ds ,̇    -) =
   Σ.map  id          (flip _,̇_ p) (all-splits ps ds)
-all-splits {Γ = Γ ∷ (ε   , C)} (ps ,̇ p) (ds ,̇   +-) = 
+all-splits {Γ = Γ ∷ (ε   , C)} (ps ,̇ p) (ds ,̇   +-) =
   Σ.map (flip _,̇_ p) (flip _,̇_ p) (all-splits ps ds)
 all-splits {Γ = Γ ∷ (ε   , C)} (ps ,̇ p) (ds ,̇   -+) =
   Σ.map (flip _,̇_ p) (flip _,̇_ p) (all-splits ps ds)
-all-splits {Γ = Γ ∷ (> _ , C)} (ps ,̇ p) (ds ,̇    +) = 
+all-splits {Γ = Γ ∷ (> _ , C)} (ps ,̇ p) (ds ,̇    +) =
   Σ.map (flip _,̇_ p)  id          (all-splits ps ds)
-all-splits {Γ = Γ ∷ (> _ , C)} (ps ,̇ p) (ds ,̇    -) = 
+all-splits {Γ = Γ ∷ (> _ , C)} (ps ,̇ p) (ds ,̇    -) =
   Σ.map  id          (flip _,̇_ p) (all-splits ps ds)
-\end{code}
-
-\begin{code}
-pattern %_  x = _ , x
-pattern %2_ x = % %  x
-pattern %3_ x = % %2 x
-pattern %4_ x = % %3 x
-
-pattern »»_ x = > + , %2 x
-pattern _«« x = > - , %2 x
 \end{code}
 
 \begin{code}
@@ -131,7 +141,7 @@ private Ty = Cx → Cx → Set₁
 
 \begin{code}
 New : Ty
-New Γ Δ = Σ _ λ F → Δ ≡ Γ ∷ ε , F
+New Γ Δ = Σ _ λ F → Δ ≡ Γ ∷ (ε , F)
 \end{code}
 
 \begin{code}
@@ -143,7 +153,7 @@ Send Γ Δ = Σ (Entry × Side × Code) λ W →
              (_≡_ Δ ∘ ud (> s , _ , _ , R))
 Receive Γ Δ = Σ (Side × _ × Code) λ W →
               let s , L , _ , _ , R = W in
-              Σ ((> s , %2 (L [ s ]⅋ R)) ∈ Γ) λ i → 
+              Σ ((> s , %2 (L [ s ]⅋ R)) ∈ Γ) λ i →
                 Δ ≡ ud (> s , %2 R) i ∷ L
 \end{code}
 
@@ -230,7 +240,7 @@ Guarded (`ν F _  ) = ∀ o → Guarded (F o)
 \begin{code}
 CoRec : (Set → Ty) → Set → Ty
 CoRec F X Γ Δ = Σ (Side × Σ _ λ I → Σ _ λ O → (O → (I ⊎ O) ▹ ⊤) × O) λ W →
-                let s , I , O , T , o = W in 
+                let s , I , O , T , o = W in
                 Σ ((> s , %2 `ν T o) ∈ Γ) λ i →
                   ((o : O) →   Guarded (T o)
                              × F (X ⊎ O) (ud (> s , %2 T o) i) Δ)
@@ -264,9 +274,9 @@ open T using (Tag)
 π T.ctr   T X Γ Δ = Ctr          Γ Δ                 × X ≡ ⊤
 π T.write T X Γ Δ = Write        Γ Δ                 × X ≡ ⊤
 π T.corec T X Γ Δ = CoRec   T X  Γ Δ
-π T.read  T X Γ Δ = Σ (Read Γ Δ) λ p →                          
-                    let ((_ , J , _) , _) , _ = p in   X ≡ J       
-π T.end   T X Γ Δ = Σ (End  Γ Δ) λ p →                             
+π T.read  T X Γ Δ = Σ (Read Γ Δ) λ p →
+                    let ((_ , J , _) , _) , _ = p in   X ≡ J
+π T.end   T X Γ Δ = Σ (End  Γ Δ) λ p →
                     let (I , _ , _) , _ = p in         X ≡ I
 π T.at    T X Γ Δ = Σ (At Γ Δ) λ p →
                     let (_ , O , _) , _ = p in         X ≡ O
@@ -275,40 +285,42 @@ open T using (Tag)
 \begin{code}
 module Process where
 
-  infix 2 _[_⊢_]>_
+  infix  2 _[_⊢_]>_
+  infix  7 ⇑_
+  infixr 5 _»=_
 
   F = λ T X Γ Δ → Σ T.Tag λ t → π t T X Γ Δ
 
   data _[_⊢_]>_ Γ (M : Set → Set) X : Cx → Set₁ where
     ⇑_    :             M X                                → Γ [ M ⊢ X ]> Γ
     [_]   : ∀ {Δ}     → F (λ Z A B → A [ M ⊢ Z ]> B) X Γ Δ → Γ [ M ⊢ X ]> Δ
-    _»=_  : ∀ {Ξ Δ Y} → Γ [ M ⊢ Y ]> Ξ                     → 
+    _»=_  : ∀ {Ξ Δ Y} → Γ [ M ⊢ Y ]> Ξ                     →
                    (Y → Ξ [ M ⊢ X ]> Δ)                    → Γ [ M ⊢ X ]> Δ
 
 open Process using (_[_⊢_]>_ ; ⇑_ ; _»=_ ; [_]) public
 \end{code}
 
 \begin{code}
-pattern fork    d x    = [ T.fork  , (d , x , <>)                 , <> ] 
-pattern new            = [ T.new   , (_ , <>)                     , <> ] 
-pattern send    i j    = [ T.send  , % (i , j , <>)               , <> ] 
-pattern receive i      = [ T.recv  , % (i , <>)                   , <> ] 
-pattern accept  i a p  = [ T.!!    , % (i , a , p , <>)           , <> ] 
-pattern connect i   p  = [ T.??    , % (i , p)                         ] 
-pattern wont    i      = [ T.wk    , % (i , <>)                   , <> ] 
-pattern twice   i      = [ T.ctr   , % (i , <>)                   , <> ] 
-pattern write   i x    = [ T.write , ((_ , x , _) , i , <>)       , <> ] 
-pattern read    i      = [ T.read  , % (i , <>)                   , <> ] 
-pattern end/    i r    = [ T.end   , ((_ , _ , r , _) , (i , <>)) , <> ] 
+pattern fork    d x    = [ T.fork  , (d , x , <>)                 , <> ]
+pattern new            = [ T.new   , (_ , <>)                     , <> ]
+pattern send    i j    = [ T.send  , % (i , j , <>)               , <> ]
+pattern receive i      = [ T.recv  , % (i , <>)                   , <> ]
+pattern accept  i a p  = [ T.!!    , % (i , a , p , <>)           , <> ]
+pattern connect i   p  = [ T.??    , % (i , p)                         ]
+pattern wont    i      = [ T.wk    , % (i , <>)                   , <> ]
+pattern twice   i      = [ T.ctr   , % (i , <>)                   , <> ]
+pattern write   i x    = [ T.write , ((_ , x , _) , i , <>)       , <> ]
+pattern read    i      = [ T.read  , % (i , <>)                   , <> ]
+pattern end/    i r    = [ T.end   , ((_ , _ , r , _) , (i , <>)) , <> ]
 pattern end     i      = end/ i _
-pattern at/     i o    = [ T.at    , ((%3 (o , _) , (i , <>)))    , <> ] 
-pattern at      i      = at/ i _                                         
+pattern at/     i o    = [ T.at    , ((%3 (o , _) , (i , <>)))    , <> ]
+pattern at      i      = at/ i _
 pattern corec   i o gp = [ T.corec , (%4 o) , (i , (gp , <>))          ]
 \end{code}
 
 \begin{code}
 infixr 5 bind
-bind : ∀ {M Γ Ξ Δ X Y} → Γ [ M ⊢ Y ]> Ξ  → 
+bind : ∀ {M Γ Ξ Δ X Y} → Γ [ M ⊢ Y ]> Ξ  →
                     (Y → Ξ [ M ⊢ X ]> Δ) → Γ [ M ⊢ X ]> Δ
 bind = _»=_
 syntax bind m (λ x → y) = x <- m ⋯ y
@@ -403,65 +415,65 @@ run : {Γ Δ : Cx}{X : Set} → Γ [IO X ]> Δ → ⟦ Γ ⟧Cx → IO (X × ⟦
 \end{code}
 
 \begin{code}
-run (⇑ m           ) cs = mapIO (flip _,_ cs) m                                           
-                                                                                          
-run (m »= f        ) cs = run m cs >>= λ { (x , cs) → run (f x) cs }                      
-\end{code}                                                                                
-                                                                                          
-\begin{code}                                                                              
-run (new           ) cs = newChan >>= λ c → return (_ , (cs ,̇ c))                         
-                                                                                          
-run (fork       d x) cs = let ls , rs = all-splits cs d in                                
-                          forkIO (run x rs >> return ⟨⟩) >>                               
-                          return (tt , ls)                                                
-\end{code}                                                                                
-                                                                                          
-\begin{code}                                                                              
-run (send       i j) cs = let chanToSend    = lookupUChan        i  cs in                 
-                          let chanToWriteOn = lookupUChan (wk/ i j) cs in                 
+run (⇑ m           ) cs = mapIO (flip _,_ cs) m
+
+run (m »= f        ) cs = run m cs >>= λ { (x , cs) → run (f x) cs }
+\end{code}
+
+\begin{code}
+run (new           ) cs = newChan >>= λ c → return (_ , (cs ,̇ c))
+
+run (fork       d x) cs = let ls , rs = all-splits cs d in
+                          forkIO (run x rs >> return ⟨⟩) >>
+                          return (tt , ls)
+\end{code}
+
+\begin{code}
+run (send       i j) cs = let chanToSend    = lookupUChan        i  cs in
+                          let chanToWriteOn = lookupUChan (wk/ i j) cs in
                           writeUChan chanToWriteOn chanToSend >>
                           return (tt , unsafeCoerce (all-rm i cs))
-                          -- return (tt , all-ud j (all-rm i cs)                     
-                          --                       chanToWriteOn)                       
-                                                                                          
-run (receive      i) cs = let chanToReadFrom = lookupUChan i cs in                        
-                          readUChan chanToReadFrom >>= λ receivedChan →                   
-                          return (tt , (unsafeCoerce cs ,̇ receivedChan))                  
-\end{code}                                                                                
-                                                                                          
-\begin{code}                                                                              
-run (accept i   a p) cs = forkIO server >> return (tt , all-rm i cs)                   
-  where c = lookupUChan i cs                                            
-        service : UChan → IO _                                          
+                          -- return (tt , all-ud j (all-rm i cs)
+                          --                       chanToWriteOn)
+
+run (receive      i) cs = let chanToReadFrom = lookupUChan i cs in
+                          readUChan chanToReadFrom >>= λ receivedChan →
+                          return (tt , (unsafeCoerce cs ,̇ receivedChan))
+\end{code}
+
+\begin{code}
+run (accept i   a p) cs = forkIO server >> return (tt , all-rm i cs)
+  where c = lookupUChan i cs
+        service : UChan → IO _
         service n = run p (all-ud i cs n) >> return ⟨⟩
-        server : IO C.<>                                                
-        server = readUChan c        >>= λ n →                           
-                 forkIO (service n) >>                                  
-                 server                                                 
-                                                                                          
-run (connect    i p) cs = newChan                         >>= λ n →                       
-                          writeUChan (lookupUChan i cs) n >>                              
+        server : IO C.<>
+        server = readUChan c        >>= λ n →
+                 forkIO (service n) >>
+                 server
+
+run (connect    i p) cs = newChan                         >>= λ n →
+                          writeUChan (lookupUChan i cs) n >>
                           run p (all-ud i cs n)
-                                                                                          
-run (wont         i) cs = return (tt , all-rm i cs)                                    
-                                                                                          
-run (twice        i) cs = return (tt , (cs ,̇ lookupUChan i cs))                           
-\end{code}                                                                                
-                                                                                          
-\begin{code}                                                                              
-run (write      i x) cs = let c = lookupUChan i cs in                                     
-                          writeUChan c x >>                                               
-                          return (tt , unsafeCoerce cs)                                   
-                                                                                          
-run (read         i) cs = let c = lookupUChan i cs in                                     
+
+run (wont         i) cs = return (tt , all-rm i cs)
+
+run (twice        i) cs = return (tt , (cs ,̇ lookupUChan i cs))
+\end{code}
+
+\begin{code}
+run (write      i x) cs = let c = lookupUChan i cs in
+                          writeUChan c x >>
+                          return (tt , unsafeCoerce cs)
+
+run (read         i) cs = let c = lookupUChan i cs in
                           readUChan c >>= λ x →
-                          return (x , unsafeCoerce cs)                                    
-\end{code}                                                                                
-                                                                                          
-\begin{code}                                                                              
-run (end/       i r) cs = return (r , all-rm i cs)                                     
-                                                                                          
-run (at/        i o) cs = return (o , unsafeCoerce cs)                                    
+                          return (x , unsafeCoerce cs)
+\end{code}
+
+\begin{code}
+run (end/       i r) cs = return (r , all-rm i cs)
+
+run (at/        i o) cs = return (o , unsafeCoerce cs)
 \end{code}
 
 \begin{code}

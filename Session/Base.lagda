@@ -22,7 +22,7 @@ open import Function  public
 open import Data.List public using (List ; [])
 module L = Data.List
 
-infixl 4 _∷_
+infixl 5 _∷_
 pattern _∷_ xs x = x L.∷ xs
 \end{code}
 
@@ -207,6 +207,8 @@ open ⊎ public
 \begin{code}
 data Side : Set where + - : Side
 
+infix 7 −_
+
 −_ : Side → Side
 − + = -
 − - = +
@@ -220,6 +222,8 @@ TODO. Avoid?
 
 \begin{code}
 module Σ̂ where
+  infixr 6 %_
+
   record Σ̂ {lA}(A : Set lA){lB}(B : A → Set lB) : Set (lA ⊔ lB) where
     constructor %_
     field      {l̂} : A
@@ -232,8 +236,10 @@ module Σ̂ where
 \end{code}
 
 \begin{code}
+  infixr 6 %%_
   pattern %%_ x = % % x
 
+  infixr 6 %2_ %3_ %4_ %5_ %6_ %7_ %8_
   pattern %2_ x = %%   x
   pattern %3_ x = %2 % x
   pattern %4_ x = %3 % x
@@ -247,6 +253,9 @@ module Σ̂ where
 \end{code}
 
 \begin{code}
+  infixr 6 »»_
+  infixl 6 _««
+
   pattern »»_ x = > + , %2 x
   pattern _«« x = > - , %2 x
 \end{code}
